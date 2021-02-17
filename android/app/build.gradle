@@ -80,6 +80,7 @@ import com.android.build.OutputFile
 
 project.ext.react = [
     enableHermes: false,  // clean and rebuild if changing
+    bundleInDebug: true
 ]
 
 apply from: "../../node_modules/react-native/react.gradle"
@@ -130,7 +131,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.futtonteacher"
+        applicationId "com.diginest.futton"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

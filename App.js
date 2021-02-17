@@ -1,6 +1,6 @@
 import                                    'react-native-gesture-handler';
 import React, { useContext }         from 'react';
-import { useEffect, useState }       from 'react';s
+import { useEffect, useState }       from 'react';
 import { Provider }                  from 'react-redux';
 import SplashScreen                  from 'react-native-splash-screen';
 import auth                          from '@react-native-firebase/auth';

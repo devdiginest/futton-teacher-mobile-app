@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "1067098669754",
+    "project_id": "dev-futton",
+    "storage_bucket": "dev-futton.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067098669754:android:77dea5fe965ee587c37883",
+        "android_client_info": {
+          "package_name": "com.diginest.futton"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1067098669754-n2gfgq6sofjijo3mej7m5edle3e9ba8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX08BtLSEVY3yWXfmWyJ5947So7emLIcc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1067098669754-n2gfgq6sofjijo3mej7m5edle3e9ba8g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067098669754:android:0c58db1805115bb7c37883",
+        "android_client_info": {
+          "package_name": "com.diginet.teacher"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1067098669754-n2gfgq6sofjijo3mej7m5edle3e9ba8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX08BtLSEVY3yWXfmWyJ5947So7emLIcc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1067098669754-n2gfgq6sofjijo3mej7m5edle3e9ba8g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
