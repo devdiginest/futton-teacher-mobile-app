@@ -5,28 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '@kimche/react-native-progress-bar';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from '../components/Axios';
-
-const screenData = [{
-  "id": 1,
-  "name": "GATE 2021 Premium Batch",
-  "progress": 20
-}, {
-  "id": 2,
-  "name": "GATE 2021 Alpha Batch",
-  "progress": 50
-}, {
-  "id": 3,
-  "name": "Introduction to Numbers",
-  "progress": 30
-}, {
-  "id": 4,
-  "name": "History of Cube & Cube Root",
-  "progress": 0
-}, {
-  "id": 5,
-  "name": "Introduction to Linear Equations",
-  "progress": 0
-}];
+import { CourseComponent } from "./../components"
 
 export default function MyCoursesOngoing({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -62,23 +41,24 @@ export default function MyCoursesOngoing({ navigation }) {
         style={styles.flatlist}
         keyExtractor={(item) => { return item.id.toString(); }}
         renderItem={({ item, index }) => {
-          return (
-            <TouchableOpacity style={styles.ocourse}>
-              <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
-
-              <View>
-                <Text style={styles.cname}>{item.name}</Text>
-                <Text style={styles.cprogress}>Progress: 50%</Text>
-                <ProgressBar
-                  max={100}
-                  width={72}
-                  height={4}
-                  progress={50}
-                  progressColor="#3951B6"
-                  style={styles.cprogressbar} />
-              </View>
-            </TouchableOpacity>
-          )
+          /*  return (
+             <TouchableOpacity style={styles.ocourse}>
+               <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
+ 
+               <View>
+                 <Text style={styles.cname}>{item.name}</Text>
+                 <Text style={styles.cprogress}>Progress: 50%</Text>
+                 <ProgressBar
+                   max={100}
+                   width={72}
+                   height={4}
+                   progress={50}
+                   progressColor="#3951B6"
+                   style={styles.cprogressbar} />
+               </View>
+             </TouchableOpacity>
+           ) */
+          return (<CourseComponent item={item} />)
         }
         } />
     </ScrollView>

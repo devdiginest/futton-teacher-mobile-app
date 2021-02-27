@@ -7,7 +7,7 @@ import { logout } from '../actions/Auth';
 import MessagesStack from '../navigation/MessagesStack';
 import HomeStackRouter from '../navigation/Home-Stack';
 import ProfileStackRouter from '../navigation/ProfileStack';
-import MyCourses from './MyCourses';
+import MycourseStack from '../navigation/MycourseStack';
 import Notifications from './Notifications';
 
 const Tab = createBottomTabNavigator();
@@ -39,7 +39,7 @@ export default function BottomTabRouter({ navigation }) {
         }} />
       <Tab.Screen
         name="My Courses"
-        component={MyCourses}
+        component={MycourseStack}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Image

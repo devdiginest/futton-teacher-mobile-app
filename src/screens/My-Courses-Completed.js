@@ -4,6 +4,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from '../components/Axios';
+import { CourseComponent } from "./../components"
 
 const screenData = [{
   "id": 1,
@@ -46,26 +47,27 @@ export default function MyCoursesCompleted({ navigation }) {
       style={styles.container}
       keyExtractor={(item) => { return item.id.toString(); }}
       renderItem={({ item, index }) => {
-        return (
-          <View style={styles.ocourse}>
-            <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
-
-            <View>
-              <Text style={styles.cname}>{item.name}</Text>
-              <TouchableOpacity
-                style={styles.continuebtncontainer}
-                onPress={viewreviews}>
-                <LinearGradient
-                  colors={['#0066D1', '#03C0C7']}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={styles.continuebtngradient}>
-                  <Text style={styles.continuebtntext}>View Reviews</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )
+        /*  return (
+           <View style={styles.ocourse}>
+             <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
+ 
+             <View>
+               <Text style={styles.cname}>{item.name}</Text>
+               <TouchableOpacity
+                 style={styles.continuebtncontainer}
+                 onPress={viewreviews}>
+                 <LinearGradient
+                   colors={['#0066D1', '#03C0C7']}
+                   start={{ x: 0, y: 0.5 }}
+                   end={{ x: 1, y: 0.5 }}
+                   style={styles.continuebtngradient}>
+                   <Text style={styles.continuebtntext}>View Reviews</Text>
+                 </LinearGradient>
+               </TouchableOpacity>
+             </View>
+           </View>
+         ) */
+        return (<CourseComponent item={item} />)
       }
       } />
   );

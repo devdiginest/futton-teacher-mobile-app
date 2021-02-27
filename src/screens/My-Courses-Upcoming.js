@@ -27,9 +27,6 @@ export default function MyCoursesUpcoming({ navigation }) {
       .then(response => {
         if (response.status === 200) {
           const data = response.data;
-          console.log('====================================');
-          console.log("getMyCourses ==>", data);
-          console.log('====================================');
           if (data) {
             setUCourses(data.upcoming);
           }

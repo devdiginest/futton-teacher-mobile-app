@@ -1,3 +1,4 @@
 export default {
-    homeSlider: "mobile/sliders"
+    homeSlider: "mobile/sliders",
+    courseDetails: (courseId) => `mobile/mycourses/${courseId}`
 }

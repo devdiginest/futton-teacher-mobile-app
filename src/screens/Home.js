@@ -10,6 +10,7 @@ import _ from "lodash"
 import API from "./../config/api"
 import { API_URL, BASE_URL } from "./../config/Constants"
 import { setProfileData } from "../actions/Auth"
+import { CourseComponent } from "./../components"
 
 export default function Home({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -71,9 +72,6 @@ export default function Home({ navigation }) {
         if (response.status === 200) {
           const data = response.data;
           if (data) {
-            console.log('====================================');
-            console.log("PROFILE DATA =>", JSON.stringify(data));
-            console.log('====================================');
             dispatch(setProfileData(data));
           }
         }
@@ -110,16 +108,7 @@ export default function Home({ navigation }) {
               style={styles.courses}
               keyExtractor={(item) => { return item.id.toString(); }}
               renderItem={({ item }) => {
-                return (
-                  <View style={styles.course}>
-                    <Image style={styles.cimg} source={require('../../assets/img-course.png')} />
-
-                    <View style={styles.cdetails}>
-                      <Text style={styles.cname}>{item.name}</Text>
-                      <Text style={styles.cprogress}>Starting on {item.start_date}</Text>
-                    </View>
-                  </View>
-                )
+                return (<CourseComponent item={item} />)
               }} />
           </View>
 
@@ -134,21 +123,7 @@ export default function Home({ navigation }) {
               style={styles.courses}
               keyExtractor={(item) => { return item.id.toString(); }}
               renderItem={({ item }) => {
-                return (
-                  <TouchableOpacity style={styles.course} onPress={showClassroom}>
-                    <Image style={styles.cimg} source={require('../../assets/img-course.png')} />
-
-                    <View style={styles.cdetails}>
-                      <Text style={styles.cname}>{item.name}</Text>
-
-                      <View style={styles.cratingsnreviews}>
-                        <Image style={styles.cstar} source={require('../../assets/img-course-star.png')} />
-                        <Text style={styles.cratings}>{item.ratings != null ? item.ratings.substring(0, 3) : 0}</Text>
-                        <Text style={styles.creviews}>({item.reviews} Reviews)</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                )
+                return (<CourseComponent item={item} />)
               }} />
           </View>
         </View>

@@ -24,9 +24,6 @@ export default function Profile({ navigation }) {
         if (response.status === 200) {
           const data = response.data;
           if (data) {
-            console.log('====================================');
-            console.log("PROFILE DATA =>", JSON.stringify(data));
-            console.log('====================================');
             setProfile(data);
           }
         }

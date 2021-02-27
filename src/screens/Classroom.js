@@ -1,11 +1,91 @@
-import React from 'react';
-import { Button, Text, View, StatusBar } from 'react-native';
-import { Image, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StatusBar, Image, StyleSheet, Pressable, ScrollView, FlatList, } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { Avatar, Button, Header, Text, Icon } from 'react-native-elements';
 
-export default function Classroom({ navigation }) {
-  return (
-    <View style={styles.ocontainer}>
-      <StatusBar barStyle="dark-content" />
+import axios from '../components/Axios';
+import API from "../config/api"
+import { HEIGHT, WIDTH } from "../constants"
+
+
+const buttons = ["Robotics", "Forensic Science"]
+
+
+function Classroom(props) {
+  const { navigation, route: { params: { item = {} } } = { item: {} } } = props
+  const [oCourses, setOCourses] = useState({});
+  const [selected, setSelected] = useState(0);
+  const ScrollViewRef = useRef(null)
+  const auth = useSelector(state => state.auth);
+  const userToken = auth.token ? auth.token : null;
+  const Axios = axios(userToken);
+
+  const getMyCourses = async () => {
+    await Axios
+      .get(API.courseDetails(item.id))
+      .then(response => {
+        if (response.status === 200) {
+          const data = response.data;
+          console.log("courseDetails ==>", item);
+          if (data) {
+            setOCourses(data.ongoing);
+          }
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
+  useEffect(() => {
+    getMyCourses();
+  }, []);
+
+  useEffect(() => {
+    ScrollViewRef.current?.scrollTo({ x: selected * WIDTH, animated: true })
+  }, [selected])
+
+  return (<>
+    <Header
+      backgroundColor="#FFF"
+      barStyle="dark-content"
+      centerComponent={{
+        text: item.name,
+        style: styles.headercentercomp
+      }}
+      leftComponent={<Pressable onPress={() => navigation.goBack()}><Icon type="material" name="arrow-back" color='#3951B6' /></Pressable>}
+      rightComponent={{ icon: 'edit', color: '#3951B6' }}
+      containerStyle={styles.headercontainer}
+      rightContainerStyle={styles.headerrightcontainer}
+      placement="left" />
+    <View style={{ flex: 1, backgroundColor: "#FFF" }}>
+      <View style={{ height: HEIGHT * 0.05 }}>
+        <FlatList
+          showsHorizontalScrollIndicator={false}
+          horizontal
+          data={buttons}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item, index }) => <Pressable onPress={() => setSelected(index)} style={{ height: HEIGHT * 0.05, paddingHorizontal: WIDTH * 0.05, alignItems: "center", justifyContent: "center", backgroundColor: selected == index ? '#3951B6' : "#FFF" }}>
+            <Text style={{ fontSize: 16, fontFamily: "System", color: selected != index ? '#3951B6' : "#FFF" }}>{item}</Text>
+          </Pressable>}
+        />
+      </View>
+
+      <ScrollView horizontal style={{ flex: 1, }}
+        ref={ScrollViewRef}
+      >
+        <FlatList
+          scrollEnabled={false}
+          showsHorizontalScrollIndicator={false}
+          horizontal
+          data={buttons}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item, index }) => <View onPress={() => setSelected(index)} style={{ flex: 1, width: WIDTH, paddingHorizontal: WIDTH * 0.05, alignItems: "center", justifyContent: "center", }}>
+            <Text style={{ fontSize: 16, fontFamily: "System", color: selected != index ? '#3951B6' : "#FFF" }}>{item}</Text>
+          </View>}
+        />
+      </ScrollView>
+
+    </View>
+    {/* <View style={styles.ocontainer}>
       <View style={styles.container}>
         <Text style={styles.cname}>GATE 2021 Premium Batch</Text>
 
@@ -62,11 +142,28 @@ export default function Classroom({ navigation }) {
           </View>
         </View>
       </View>
-    </View>
+    </View> */}
+  </>
   );
 }
 
+export default Classroom
+
 const styles = StyleSheet.create({
+  headercentercomp: {
+    color: '#3951B6',
+    fontSize: 20,
+    fontWeight: '600',
+    fontFamily: 'System'
+  },
+  headercontainer: {
+    width: '100%',
+    borderBottomWidth: 1.5,
+    elevation: 10
+  },
+  headerrightcontainer: {
+    paddingRight: 10
+  },
   ocontainer: {
     height: '100%',
     backgroundColor: '#FFF'
