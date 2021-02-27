@@ -1,22 +1,22 @@
-import React, { useEffect, useState}    from 'react';
-import { FlatList, StyleSheet }         from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet } from 'react-native';
 import { Text, TouchableOpacity, View } from 'react-native';
-import LinearGradient                   from 'react-native-linear-gradient';
-import { useDispatch, useSelector }      from 'react-redux';
-import axios                             from '../components/Axios';
+import LinearGradient from 'react-native-linear-gradient';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from '../components/Axios';
 
 const screenData = [{
-  "id"   : 1,
-  "name" : "Introduction to Learning Maths"
+  "id": 1,
+  "name": "Introduction to Learning Maths"
 }];
 
 export default function MyCoursesCompleted({ navigation }) {
-  const [ loading, setLoading ]   = useState(true);
-  const [ cCourses, setCCourses ] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [cCourses, setCCourses] = useState({});
 
-  const auth      = useSelector(state => state.auth);
+  const auth = useSelector(state => state.auth);
   const userToken = auth.token ? auth.token : null;
-  const Axios     = axios(userToken);
+  const Axios = axios(userToken);
 
   const viewreviews = () => {
 
@@ -29,7 +29,7 @@ export default function MyCoursesCompleted({ navigation }) {
         if (response.status === 200) {
           const data = response.data;
           if (data) {
-            // setCCourses(data.completed);
+            setCCourses(data.completed);
           }
         }
       })
@@ -44,8 +44,8 @@ export default function MyCoursesCompleted({ navigation }) {
     <FlatList
       data={cCourses}
       style={styles.container}
-      keyExtractor= {(item) => { return item.id.toString(); }}
-      renderItem={({item, index}) => {
+      keyExtractor={(item) => { return item.id.toString(); }}
+      renderItem={({ item, index }) => {
         return (
           <View style={styles.ocourse}>
             <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
@@ -56,7 +56,7 @@ export default function MyCoursesCompleted({ navigation }) {
                 style={styles.continuebtncontainer}
                 onPress={viewreviews}>
                 <LinearGradient
-                  colors={[ '#0066D1', '#03C0C7' ]}
+                  colors={['#0066D1', '#03C0C7']}
                   start={{ x: 0, y: 0.5 }}
                   end={{ x: 1, y: 0.5 }}
                   style={styles.continuebtngradient}>
@@ -67,7 +67,7 @@ export default function MyCoursesCompleted({ navigation }) {
           </View>
         )
       }
-    } />
+      } />
   );
 }
 
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     marginRight: 24,
     padding: 15,
     paddingLeft: 20,
-    flexDirection:'row',
+    flexDirection: 'row',
     backgroundColor: '#FFF',
     borderRadius: 6,
     shadowColor: '#26000000',

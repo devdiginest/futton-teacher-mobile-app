@@ -1,65 +1,62 @@
-import React, { Fragment }              from 'react';
-import { useState, useEffect }          from 'react';
-import { FlatList, Image, StyleSheet }  from 'react-native';
+import React, { Fragment } from 'react';
+import { useState, useEffect } from 'react';
+import { FlatList, Image, StyleSheet } from 'react-native';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Header }                       from 'react-native-elements';
-import firestore                        from '@react-native-firebase/firestore';
-import Loading                          from '../components/Loading';
+import { Header } from 'react-native-elements';
+import firestore from '@react-native-firebase/firestore';
+import { connect } from "react-redux"
+import Loading from '../components/Loading';
+import _ from 'lodash';
 
 const screenData = [{
-  id    : 1,
-  image : "../../assets/icon-msg-student1.png",
-  name  : "Student 1",
-  text  : "Yah, I have 3 lessons for you.",
-  time  : "30 min ago"
+  id: 1,
+  image: "../../assets/icon-msg-student1.png",
+  name: "Student 1",
+  text: "Yah, I have 3 lessons for you.",
+  time: "30 min ago"
 }, {
-  id    : 2,
-  image : "../../assets/icon-msg-student2.png",
-  name  : "Student 2",
-  text  : "Yah, I have 3 lessons for you.",
-  time  : "Yesterday"
+  id: 2,
+  image: "../../assets/icon-msg-student2.png",
+  name: "Student 2",
+  text: "Yah, I have 3 lessons for you.",
+  time: "Yesterday"
 }, {
-  id    : 3,
-  image : "../../assets/icon-msg-student3.png",
-  name  : "Student 3",
-  text  : "Yah, I have 3 lessons for you.",
-  time  : "11 Jan 2020"
+  id: 3,
+  image: "../../assets/icon-msg-student3.png",
+  name: "Student 3",
+  text: "Yah, I have 3 lessons for you.",
+  time: "11 Jan 2020"
 }, {
-  id    : 4,
-  image : "../../assets/icon-msg-student4.png",
-  name  : "Student 4",
-  text  : "Yah, I have 3 lessons for you.",
-  time  : "11 Jan 2020"
+  id: 4,
+  image: "../../assets/icon-msg-student4.png",
+  name: "Student 4",
+  text: "Yah, I have 3 lessons for you.",
+  time: "11 Jan 2020"
 }, {
-  id    : 5,
-  image : "../../assets/icon-msg-student5.png",
-  name  : "Student 5",
-  text  : "Yah, I have 3 lessons for you.",
-  time  : "11 Jan 2020"
+  id: 5,
+  image: "../../assets/icon-msg-student5.png",
+  name: "Student 5",
+  text: "Yah, I have 3 lessons for you.",
+  time: "11 Jan 2020"
 }];
 
-export default function Messages({ navigation }) {
-  const [ threads, setThreads ] = useState([]);
-  const [ loading, setLoading ] = useState(true);
+function Messages({ navigation, userData }) {
+  const [threads, setThreads] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = firestore()
-      .collection('THREADS')
-      .onSnapshot((querySnapshot) => {
-        const threads = querySnapshot.docs.map((documentSnapshot) => {
-          return {
-            _id  : documentSnapshot.id,
-            name : '',
-            ...documentSnapshot.data()
-          };
-        });
-
-        setThreads(threads);
-
-        if (loading) {
-          setLoading(false);
+    const unsubscribe = firestore().collection('chat-history').onSnapshot((querySnapshot) => {
+      let thread = []
+      querySnapshot.docs.forEach((documentSnapshot) => {
+        if (documentSnapshot.id.includes(userData.id)) {
+          thread.push({ _id: documentSnapshot.id, ...documentSnapshot.data() });
         }
       });
+      setThreads(thread);
+      if (loading) {
+        setLoading(false);
+      }
+    });
 
     return () => unsubscribe();
   }, []);
@@ -72,23 +69,21 @@ export default function Messages({ navigation }) {
     <Fragment>
       <Header
         backgroundColor="#FFF"
-        barStyle="default"
+        barStyle="dark-content"
         centerComponent={{
           text: "Messages",
           style: styles.headercentercomp
         }}
         containerStyle={styles.headercontainer}
         placement="left" />
-
       <FlatList
         data={threads}
         style={styles.container}
         keyExtractor={(item) => item._id}
-        ItemSeparatorComponent={() => { return ( <View style={styles.separator} /> )}}
+        ItemSeparatorComponent={() => { return (<View style={styles.separator} />) }}
         renderItem={item => {
           const msg = item.item;
-
-          return(
+          return (
             <TouchableOpacity
               style={styles.ncontainer}
               onPress={() => navigation.navigate('Chat', { thread: msg })}>
@@ -97,7 +92,7 @@ export default function Messages({ navigation }) {
               <View style={styles.content}>
                 <View style={styles.message}>
                   <Text style={styles.name}>{msg.name}</Text>
-                  <Text>{msg.latestMessage == null ? 'No Messages' : msg.latestMessage.text}</Text>
+                  <Text>No Messages</Text>
                 </View>
 
                 <Text style={styles.timeAgo}>{/*msg.latestMessage == null ? '' : msg.latestMessage.createdAt*/}</Text>
@@ -135,6 +130,18 @@ export default function Messages({ navigation }) {
     </Fragment>
   );
 }
+
+const mapStateToProps = (state /*, ownProps*/) => {
+  const { userData } = state.auth
+  return {
+    userData: userData,
+  }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Messages)
+
 
 const styles = StyleSheet.create({
   headercontainer: {

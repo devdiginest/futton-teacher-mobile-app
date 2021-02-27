@@ -1,10 +1,11 @@
-import React                  from 'react';
-import { Button, Text, View } from 'react-native';
-import { Image, StyleSheet }  from 'react-native';
+import React from 'react';
+import { Button, Text, View, StatusBar } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
 export default function Classroom({ navigation }) {
   return (
     <View style={styles.ocontainer}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
         <Text style={styles.cname}>GATE 2021 Premium Batch</Text>
 
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
   sclass: {
     marginTop: 8,
     marginBottom: 7,
-    flexDirection:'row'
+    flexDirection: 'row'
   },
   sclassno: {
     width: 35,

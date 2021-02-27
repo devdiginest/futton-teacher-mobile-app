@@ -5,27 +5,28 @@ import {
   AUTH_LOGGED_IN,
   AUTH_LOGGING_IN,
   AUTH_LOGGING_OUT,
-  AUTH_LOGOUT
-}                            from '../constants/Auth';
-import { AuthContext }       from '../navigation/AuthProvider';
-import { navigate }          from '../services/NavRef';
-import { userService }       from '../services/UserService';
+  AUTH_LOGOUT,
+  SET_PROFILE_DATA
+} from '../constants/Auth';
+import { AuthContext } from '../navigation/AuthProvider';
+import { navigate } from '../services/NavRef';
+import { userService } from '../services/UserService';
 
 //***** LOGIN
 
 export const loggingIn = (loggingIn) => ({
-  type    : AUTH_LOGGING_IN,
-  payload : loggingIn
+  type: AUTH_LOGGING_IN,
+  payload: loggingIn
 });
 
 export const loggedIn = (data) => ({
-  type    : AUTH_LOGGED_IN,
-  payload : data
+  type: AUTH_LOGGED_IN,
+  payload: data
 });
 
 export const errorLogIn = (errorMessage) => ({
-  type    : AUTH_ERR_LOG_IN,
-  payload : errorMessage
+  type: AUTH_ERR_LOG_IN,
+  payload: errorMessage
 });
 
 export const login = (email, password) => (dispatch) => {
@@ -47,17 +48,22 @@ export const login = (email, password) => (dispatch) => {
 //***** LOGOUT
 
 export const loggedOut = () => ({
-  type    : AUTH_LOGOUT
+  type: AUTH_LOGOUT
 });
 
 export const loggingOut = (lOut) => ({
-  type    : AUTH_LOGGING_OUT,
-  payload : lOut
+  type: AUTH_LOGGING_OUT,
+  payload: lOut
 });
 
 export const errorLogOut = (errorMessage) => ({
-  type    : AUTH_ERR_LOG_OUT,
-  payload : errorMessage
+  type: AUTH_ERR_LOG_OUT,
+  payload: errorMessage
+});
+
+export const setProfileData = (userData) => ({
+  type: SET_PROFILE_DATA,
+  payload: userData
 });
 
 export const logout = () => async (dispatch, getState) => {

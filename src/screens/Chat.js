@@ -1,14 +1,15 @@
-import React, { Fragment }     from 'react';
+import React, { Fragment } from 'react';
 import { useEffect, useState } from 'react';
-import { StyleSheet }          from 'react-native';
-import { Text, View }          from 'react-native';
-import { Header }              from 'react-native-elements';
-import { GiftedChat, Bubble }  from 'react-native-gifted-chat';
-import firestore               from '@react-native-firebase/firestore';
+import { StyleSheet } from 'react-native';
+import { Text, View } from 'react-native';
+import { Header } from 'react-native-elements';
+import { GiftedChat, Bubble } from 'react-native-gifted-chat';
+import firestore from '@react-native-firebase/firestore';
+import { connect } from "react-redux"
 
-export default function Chat({ route, navigation }) {
-  const { thread }                = route.params;
-  const [ messages, setMessages ] = useState([]);
+function Chat({ route, navigation, userData }) {
+  const { thread } = route.params;
+  const [messages, setMessages] = useState([]);
 
   const loadMessagesScreen = () => {
     navigation.goBack();
@@ -18,59 +19,54 @@ export default function Chat({ route, navigation }) {
     const text = messages[0].text;
 
     await firestore()
-      .collection('THREADS')
+      .collection('chat-history')
       .doc(thread._id)
-      .collection('MESSAGES')
+      .collection('chats')
       .add({
         text,
-        createdAt : new Date().getTime(),
-        user      : {
-          // _id   : currentUser.uid,
+        createdAt: new Date().getTime(),
+        sender: { id: userData.id, name: userData.name },
+        user: {
+          _id: userData.id,
+
           // email : currentUser.email
-          _id   : "7XdHMylSf5hnyj3CfGBjHjCdo2x2",
-          email : "jkampadi@gmail.com"
+          //_id: "7XdHMylSf5hnyj3CfGBjHjCdo2x2",
+          // email: "jkampadi@gmail.com"
         }
       });
 
-    await firestore()
-      .collection('THREADS')
+    /* await firestore()
+      .collection('techerChats')
       .doc(thread._id)
       .set({
         latestMessage: {
           text,
-          createdAt : new Date().getTime()
+          createdAt: new Date().getTime()
         }
       }, {
-        merge : true
-      });
+        merge: true
+      }); */
   }
 
   useEffect(() => {
-    const messagesListener = firestore()
-      .collection('THREADS')
-      .doc(thread._id)
-      .collection('MESSAGES')
-      .orderBy('createdAt', 'desc')
+    const messagesListener = firestore().collection('chat-history').doc(thread._id).collection('chats').orderBy("createdAt", "desc")
       .onSnapshot((querySnapshot) => {
+
         const messages = querySnapshot.docs.map((doc) => {
           const firebaseData = doc.data();
-          const data         = {
-            _id       : doc.id,
-            text      : '',
-            createdAt : new Date().getTime(),
-            ...firebaseData
-          };
-
-          if (!firebaseData.system) {
-            data.user = {
-              ...firebaseData.user,
-              name : firebaseData.user.email
-            };
+          const data = {
+            _id: doc.id,
+            text: firebaseData.text,
+            createdAt: firebaseData.createdAt,
+            // ...firebaseData
+            user: {
+              _id: firebaseData.sender.id,
+              name: firebaseData.sender.name
+            }
           }
 
           return data;
         });
-
         setMessages(messages);
       });
 
@@ -82,13 +78,13 @@ export default function Chat({ route, navigation }) {
       <Bubble
         {...props}
         wrapperStyle={{
-          left  : { backgroundColor: '#F4F4F4', borderRadius: 5 },
-          right : { backgroundColor: '#3951B6', borderRadius: 5 }
+          left: { backgroundColor: '#F4F4F4', borderRadius: 5 },
+          right: { backgroundColor: '#3951B6', borderRadius: 5 }
         }}
         textStyle={{
-          left  : { color: '#222B45' },
-          right : { color: '#FFF' }
-        }}/>
+          left: { color: '#222B45' },
+          right: { color: '#FFF' }
+        }} />
     );
   }
 
@@ -96,31 +92,42 @@ export default function Chat({ route, navigation }) {
     <Fragment>
       <Header
         backgroundColor="#FFF"
-        barStyle="default"
+        barStyle="dark-content"
         centerComponent={{
           text: "Chat",
           style: styles.headercentercomp
         }}
         containerStyle={styles.headercontainer}
         leftComponent={{
-          icon : 'arrow-back',
-          color : '#3951B6',
-          onPress : loadMessagesScreen
+          icon: 'arrow-back',
+          color: '#3951B6',
+          onPress: loadMessagesScreen
         }}
         placement="left" />
 
       <View style={{ flex: 1, backgroundColor: '#FFF' }}>
-      <GiftedChat
-        user={{ _id: 1 }}
-        messages={messages}
-        renderBubble={renderBubble}
-        placeholder="Type your message here"
-        alwaysShowSend
-        onSend={handleSend} />
+        <GiftedChat
+          user={{ _id: userData.id }}
+          messages={messages}
+          renderBubble={renderBubble}
+          placeholder="Type your message here"
+          alwaysShowSend
+          onSend={handleSend} />
       </View>
     </Fragment>
   );
 }
+
+const mapStateToProps = (state /*, ownProps*/) => {
+  const { userData } = state.auth
+  return {
+    userData: userData,
+  }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Chat)
 
 const styles = StyleSheet.create({
   headercontainer: {

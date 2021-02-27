@@ -1,7 +1,6 @@
-import React                                 from 'react';
-import { Image, StyleSheet, Text }           from 'react-native';
-import { TextInput, TouchableOpacity, View } from 'react-native';
-import LinearGradient                        from 'react-native-linear-gradient';
+import React from 'react';
+import { Image, StyleSheet, Text, StatusBar, TextInput, TouchableOpacity, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 export default function ResetPassword({ navigation }) {
   const resetPassword = () => {
@@ -10,6 +9,7 @@ export default function ResetPassword({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <Image style={styles.logo} source={require('../../assets/futton-logo.png')} />
       <Text style={styles.screeninfo}>Enter your new password.</Text>
 
@@ -27,7 +27,7 @@ export default function ResetPassword({ navigation }) {
         style={styles.continuebtncontainer}
         onPress={resetPassword}>
         <LinearGradient
-          colors={[ '#0066D1', '#03C0C7' ]}
+          colors={['#0066D1', '#03C0C7']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={styles.continuebtngradient}>

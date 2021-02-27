@@ -1,57 +1,32 @@
-import React, { useEffect, useState}   from 'react';
-import { FlatList, Image, ScrollView } from 'react-native';
-import { StyleSheet, Text, View }      from 'react-native';
-import { TouchableOpacity }            from 'react-native';
-import { SafeAreaView }                from 'react-native-safe-area-context';
-import { SliderBox }                   from 'react-native-image-slider-box';
-import { useDispatch, useSelector }    from 'react-redux';
-import axios                           from '../components/Axios';
-
-const sliderImages = [
-  require('../../assets/img-home-slider.png'),
-  require('../../assets/img-home-slider.png'),
-  require('../../assets/img-home-slider.png'),
-  require('../../assets/img-home-slider.png')
-];
-
-const screenData = {
-  "upcoming" : [{
-    "id"    : 1,
-    "name"  : "GATE 2021 Alpha Batch",
-    "sdate" : "20-11-2020"
-  }, {
-    "id"    : 2,
-    "name"  : "Basic Intro to Chemistry",
-    "sdate" : "20-11-2020"
-  }],
-  "ongoing" : [{
-    "id"       : 1,
-    "name"     : "GATE 2021 Premium Batch",
-    "ratings"  : "4.6",
-    "reviews"  : 1435
-  }, {
-    "id"       : 2,
-    "name"     : "GATE 2021 Alpha Batch 2",
-    "ratings"  : "4.0",
-    "reviews"  : 243
-  }]
-};
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, ScrollView, StatusBar } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { SliderBox } from 'react-native-image-slider-box';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from '../components/Axios';
+import _ from "lodash"
+import API from "./../config/api"
+import { API_URL, BASE_URL } from "./../config/Constants"
+import { setProfileData } from "../actions/Auth"
 
 export default function Home({ navigation }) {
-  const [ loading, setLoading ]   = useState(true);
-  const [ uCourses, setUCourses ] = useState({});
-  const [ oCourses, setOCourses ] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [uCourses, setUCourses] = useState({});
+  const [oCourses, setOCourses] = useState({});
+  const [slider, setSlider] = useState([]);
 
-  const auth      = useSelector(state => state.auth);
-  const dispatch  = useDispatch();
+  const auth = useSelector(state => state.auth);
+  const dispatch = useDispatch();
   const userToken = auth.token ? auth.token : null;
-  const Axios     = axios(userToken);
+  const Axios = axios(userToken);
 
   const showMyCoursesTab = () => {
-    navigation.navigate('My Courses');
+    navigation.navigate('My Courses', { route: "Upcoming" });
   }
   const showMyCoursesTab2 = () => {
-    navigation.navigate('My Courses');
+    navigation.navigate('My Courses', { route: "Ongoing" });
   }
   const showClassroom = () => {
     navigation.navigate('Classroom');
@@ -59,7 +34,7 @@ export default function Home({ navigation }) {
 
   const getHomeData = async () => {
     await Axios
-      .get('mobile/home')
+      .get('mobile/mycourses')
       .then(response => {
         if (response.status === 200) {
           const data = response.data;
@@ -72,15 +47,52 @@ export default function Home({ navigation }) {
       .catch(err => console.log(err));
   };
 
+  const getHomeSliderData = async () => {
+    await Axios.get(API.homeSlider)
+      .then(response => {
+        if (response.status === 200) {
+          const data = response.data;
+          const temp = []
+          if (data) {
+            data.map((item) => {
+              _.has(item, "image") && temp.push(`${BASE_URL}sliders/${item.image}`)
+            })
+          }
+          setSlider([...temp])
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
+  const getProfile = async () => {
+    await Axios
+      .get('mobile/profile')
+      .then(response => {
+        if (response.status === 200) {
+          const data = response.data;
+          if (data) {
+            console.log('====================================');
+            console.log("PROFILE DATA =>", JSON.stringify(data));
+            console.log('====================================');
+            dispatch(setProfileData(data));
+          }
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
   useEffect(() => {
+    getHomeSliderData()
     getHomeData();
+    getProfile()
   }, []);
 
   return (
     <SafeAreaView>
+      <StatusBar barStyle="dark-content" />
       <ScrollView style={styles.container}>
         <SliderBox
-          images={sliderImages}
+          images={slider}
           dotColor="#7C98FD"
           inactiveDotColor="#FFF"
           sliderBoxHeight={292}
@@ -96,8 +108,8 @@ export default function Home({ navigation }) {
             <FlatList
               data={uCourses}
               style={styles.courses}
-              keyExtractor= {(item) => { return item.id.toString(); }}
-              renderItem={({item}) => {
+              keyExtractor={(item) => { return item.id.toString(); }}
+              renderItem={({ item }) => {
                 return (
                   <View style={styles.course}>
                     <Image style={styles.cimg} source={require('../../assets/img-course.png')} />
@@ -120,8 +132,8 @@ export default function Home({ navigation }) {
             <FlatList
               data={oCourses}
               style={styles.courses}
-              keyExtractor= {(item) => { return item.id.toString(); }}
-              renderItem={({item}) => {
+              keyExtractor={(item) => { return item.id.toString(); }}
+              renderItem={({ item }) => {
                 return (
                   <TouchableOpacity style={styles.course} onPress={showClassroom}>
                     <Image style={styles.cimg} source={require('../../assets/img-course.png')} />
@@ -151,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF'
   },
   coursesContainer: {
-    padding: 24
+    paddingVertical: 24,
   },
   secheading: {
     color: '#333',
@@ -180,7 +192,7 @@ const styles = StyleSheet.create({
   class: {
     marginRight: 10,
     padding: 15,
-    flexDirection:'column',
+    flexDirection: 'column',
     backgroundColor: '#FFF',
     shadowColor: '#26000000',
     shadowOffset: {
@@ -209,7 +221,8 @@ const styles = StyleSheet.create({
   },
   ongcoursesheader: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginHorizontal: 12
   },
   courses: {
     marginTop: 20,
@@ -220,8 +233,9 @@ const styles = StyleSheet.create({
   },
   course: {
     marginBottom: 10,
+    marginHorizontal: 12,
     padding: 15,
-    flexDirection:'row',
+    flexDirection: 'row',
     backgroundColor: '#FFF',
     shadowColor: '#26000000',
     shadowOffset: {
@@ -261,7 +275,8 @@ const styles = StyleSheet.create({
   },
   allcoursesheader: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginHorizontal: 12
   },
   cprice: {
     marginTop: 5,

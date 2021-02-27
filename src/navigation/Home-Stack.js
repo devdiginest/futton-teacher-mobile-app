@@ -1,7 +1,7 @@
-import React, { Fragment }      from 'react';
+import React, { Fragment } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import Home                     from './Home';
-import Classroom                from './Classroom';
+import Home from '../screens/Home';
+import Classroom from '../screens/Classroom';
 
 const HomeStack = createStackNavigator();
 

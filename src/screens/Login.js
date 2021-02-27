@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Image, Linking, StyleSheet } from 'react-native';
-import { View, TouchableOpacity }     from 'react-native';
-import { Button, Input, Text }        from 'react-native-elements';
-import LinearGradient                 from 'react-native-linear-gradient';
-import Icon                           from 'react-native-vector-icons/FontAwesome';
-import { useDispatch, useSelector }   from 'react-redux';
-import InputPasswordToggle            from '../components/InputPasswordToggle';
-import { login }                      from '../actions/Auth';
+import { Image, Linking, StyleSheet, StatusBar, View, TouchableOpacity } from 'react-native';
+import { Button, Input, Text } from 'react-native-elements';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { useDispatch, useSelector } from 'react-redux';
+import InputPasswordToggle from '../components/InputPasswordToggle';
+import { login } from '../actions/Auth';
 
 export default function Login({ navigation }) {
-  const [ email, setEmail ]       = useState('');
-  const [ password, setPassword ] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const auth                  = useSelector(state => state.auth);
-  const dispatch              = useDispatch();
+  const auth = useSelector(state => state.auth);
+  const dispatch = useDispatch();
   const { errorMessageLogin } = auth;
 
   const loadForgotPasswordScreen = () => {
@@ -43,14 +42,15 @@ export default function Login({ navigation }) {
     }
 
     return () => {
-      if (Platform.OS === 'ios') {        
+      if (Platform.OS === 'ios') {
         Linking.removeEventListener('url', handleOpenURL);
       }
     };
-   }, [])
+  }, [])
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <Image style={styles.logo} source={require('../../assets/futton-logo.png')} />
 
       {

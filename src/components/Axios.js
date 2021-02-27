@@ -1,16 +1,16 @@
 import axios from 'axios';
-
+import { API_URL } from "../config/Constants"
 const instance = (token) => {
   if (token) {
     return axios.create({
-      baseURL : 'https://qleap.co.in/futton-api/api/v1/admin/',
-      headers : {
-        Authorization : `Bearer ${token}`
+      baseURL: API_URL,
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
   } else {
     return axios.create({
-      baseURL : 'https://qleap.co.in/futton-api/api/v1/admin/'
+      baseURL: API_URL
     });
   }
 };

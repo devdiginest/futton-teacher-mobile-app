@@ -1,10 +1,10 @@
-import React, { Fragment }      from 'react';
-import { useSelector }          from 'react-redux';
+import React, { Fragment } from 'react';
+import { useSelector } from 'react-redux';
 import { createStackNavigator } from '@react-navigation/stack';
-import Login                    from '../screens/Login';
-import ForgotPassword           from '../screens/Forgot-Password';
-import ResetPassword            from '../screens/Reset-Password';
-import BottomTabRouter          from '../screens/Bottom-Tab-Router';
+import Login from '../screens/Login';
+import ForgotPassword from '../screens/Forgot-Password';
+import ResetPassword from '../screens/Reset-Password';
+import BottomTabRouter from '../screens/Bottom-Tab-Router';
 
 const Stack = createStackNavigator();
 
@@ -22,8 +22,8 @@ export default function Navigation(props) {
             <Stack.Screen options={{ headerShown: false }} name="ResetPassword" component={ResetPassword} />
           </Fragment>
         ) : (
-          <Stack.Screen options={{ headerShown: false }} name="BottomTabRouter" component={BottomTabRouter} />
-        )
+            <Stack.Screen options={{ headerShown: false }} name="BottomTabRouter" component={BottomTabRouter} />
+          )
       }
     </Stack.Navigator>
   );

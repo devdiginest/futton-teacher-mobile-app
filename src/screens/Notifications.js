@@ -1,18 +1,18 @@
-import React, { Fragment }             from 'react';
-import { useEffect, useState }         from 'react';
-import { FlatList, Image, StyleSheet } from 'react-native';
-import { TouchableOpacity, View }      from 'react-native';
-import { Header, Text }                from 'react-native-elements';
-import { useSelector }                 from 'react-redux';
-import axios                           from '../components/Axios';
+import React, { Fragment } from 'react';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, StyleSheet, StatusBar } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { Header, Text } from 'react-native-elements';
+import { useSelector } from 'react-redux';
+import axios from '../components/Axios';
 
 export default function Notifications({ navigation }) {
-  const [ loading, setLoading ]             = useState(true);
-  const [ notifications, setNotifications ] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState({});
 
-  const auth      = useSelector(state => state.auth);
+  const auth = useSelector(state => state.auth);
   const userToken = auth.token ? auth.token : null;
-  const Axios     = axios(userToken);
+  const Axios = axios(userToken);
 
   const getNotifications = async () => {
     await Axios
@@ -36,24 +36,24 @@ export default function Notifications({ navigation }) {
     <Fragment>
       <Header
         backgroundColor="#FFF"
-        barStyle="default"
+        barStyle="dark-content"
         centerComponent={{
           text: "Notifications",
           style: styles.headercentercomp
         }}
         containerStyle={styles.headercontainer}
         placement="left" />
-
+      <StatusBar barStyle="dark-content" />
       <FlatList
         data={notifications}
         style={styles.container}
         extraData={notifications}
         keyExtractor={(item) => { return item.id.toString(); }}
-        ItemSeparatorComponent={() => { return ( <View style={styles.separator} /> )}}
+        ItemSeparatorComponent={() => { return (<View style={styles.separator} />) }}
         renderItem={(item) => {
           const notificationn = item.item;
 
-          return(
+          return (
             <View style={styles.ncontainer}>
               <Image source={require('../../assets/icon-user-notification1.png')} style={styles.avatar} />
 
@@ -68,7 +68,7 @@ export default function Notifications({ navigation }) {
             </View>
           );
         }
-      } />
+        } />
     </Fragment>
   );
 }

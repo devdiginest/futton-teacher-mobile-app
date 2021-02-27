@@ -1,15 +1,14 @@
-import React, { Fragment, useState }        from 'react';
-import { Image, StyleSheet }                from 'react-native';
-import { TouchableOpacity, View }           from 'react-native';
+import React, { Fragment, useState } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 import { AlertIOS, Platform, ToastAndroid } from 'react-native';
-import { Button, Header, Input, Text }      from 'react-native-elements';
-import LinearGradient                       from 'react-native-linear-gradient';
-import axios                                from '../components/Axios';
+import { Button, Header, Input, Text } from 'react-native-elements';
+import LinearGradient from 'react-native-linear-gradient';
+import axios from '../components/Axios';
 
 export default function ForgotPassword({ navigation }) {
-  const [ email, setEmail ]     = useState('');
-  const [ loading, setLoading ] = useState(false);
-  const Axios                   = axios();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const Axios = axios();
 
   const showToast = (msg, duration) => {
     if (Platform.OS === 'android') {
@@ -52,12 +51,12 @@ export default function ForgotPassword({ navigation }) {
     <Fragment>
       <Header
         backgroundColor="#FFF"
-        barStyle="default"
+        barStyle="dark-content"
         containerStyle={styles.headercontainer}
         leftComponent={{
-          icon : 'arrow-back',
-          color : '#3951B6',
-          onPress : loadLoginScreen
+          icon: 'arrow-back',
+          color: '#3951B6',
+          onPress: loadLoginScreen
         }} />
 
       <View style={styles.container}>
