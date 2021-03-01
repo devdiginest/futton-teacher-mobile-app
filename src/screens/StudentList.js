@@ -48,7 +48,7 @@ const StudentList = (props) => {
                 keyExtractor={(item, index) => index.toString()}
                 style={{ marginTop: 12 }}
                 renderItem={({ item, index }) => {
-                    return (<TouchableOpacity style={{ height: height * 0.11, marginHorizontal: width * 0.05, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 20, elevation: 4, borderRadius: 6 }}>
+                    return (<Pressable onPress={() => navigation.navigate("StudentDetails", { item })} style={{ height: height * 0.11, marginHorizontal: width * 0.05, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 20, elevation: 4, borderRadius: 6 }}>
                         <View style={{ width: height * 0.07 }}>
                             <Image source={require("../../assets/profile-image-placeholder.png")} style={{ flex: 1, width: height * 0.06, }} resizeMode="contain" />
                         </View>
@@ -68,7 +68,7 @@ const StudentList = (props) => {
                                 <Icon type="material" name={item.status == "active" ? "done" : "close"} color='#FFF' size={20} />
                             </View>
                         </View>
-                    </TouchableOpacity>)
+                    </Pressable>)
                 }}
             />
         </View>

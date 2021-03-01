@@ -5,11 +5,11 @@ import Classroom from '../screens/Classroom';
 
 const HomeStack = createStackNavigator();
 
-export default function HomeStackRouter({ navigation }) {
+export default function MycourseStack({ navigation }) {
     return (
         <Fragment>
-            <HomeStack.Navigator>
-                <HomeStack.Screen options={{ headerShown: false }} name="Home" component={MyCourses} />
+            <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+                <HomeStack.Screen name="MyCourses" component={MyCourses} />
                 <HomeStack.Screen name="Classroom" component={Classroom} />
             </HomeStack.Navigator>
         </Fragment>

@@ -4,11 +4,12 @@ import { Button, Text } from 'react-native-elements';
 import { useDispatch, useSelector } from 'react-redux';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { logout } from '../actions/Auth';
-import MessagesStack from '../navigation/MessagesStack';
-import HomeStackRouter from '../navigation/Home-Stack';
-import ProfileStackRouter from '../navigation/ProfileStack';
-import MycourseStack from '../navigation/MycourseStack';
-import Notifications from './Notifications';
+import MessagesStack from './MessagesStack';
+import HomeStackRouter from './Home-Stack';
+import ProfileStackRouter from './ProfileStack';
+import MycourseStack from './MycourseStack';
+import MyTestAndQuizzStack from "./MyTestAndQuizzStack"
+import Notifications from '../screens/Notifications';
 
 const Tab = createBottomTabNavigator();
 
@@ -58,8 +59,8 @@ export default function BottomTabRouter({ navigation }) {
           )
         }} />
       <Tab.Screen
-        name="Notifications"
-        component={Notifications}
+        name="Test & Quiz"
+        component={MyTestAndQuizzStack}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Image

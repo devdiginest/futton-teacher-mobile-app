@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Login from '../screens/Login';
 import ForgotPassword from '../screens/Forgot-Password';
 import ResetPassword from '../screens/Reset-Password';
-import BottomTabRouter from '../screens/Bottom-Tab-Router';
+import BottomTabRouter from './Bottom-Tab-Router';
 
 const Stack = createStackNavigator();
 
