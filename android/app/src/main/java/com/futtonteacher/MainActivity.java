@@ -1,4 +1,4 @@
-package com.diginest.futton;
+package com.diginet.teacher;
 
 import android.os.Bundle;
 import com.facebook.react.ReactActivity;

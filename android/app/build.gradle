@@ -131,7 +131,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.diginest.futton"
+        applicationId "com.diginet.teacher"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

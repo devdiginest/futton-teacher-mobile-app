@@ -1,4 +1,4 @@
-package com.diginest.futton;
+package com.diginet.teacher;
 
 import android.content.Intent;
 import android.os.Bundle;
