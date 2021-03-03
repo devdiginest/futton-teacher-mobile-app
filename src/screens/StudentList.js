@@ -1,35 +1,41 @@
-import React from 'react'
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, Image, Pressable } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Pressable } from 'react-native'
 import { Header, Icon } from 'react-native-elements';
+import { useDispatch, useSelector } from 'react-redux';
+import { connect } from "react-redux"
 
-const { height, width } = Dimensions.get("screen")
+import { HEIGHT, WIDTH } from "../constants";
+import axios from '../components/Axios';
+import API from "./../config/api"
+import { BASE_URL } from "../config/Constants"
 
-
-const data = [{
-    name: "Test",
-    phone: "9999345364",
-    email: "test@test.com",
-    date: "2021-02-21T14:46:12.387Z",
-    duration: 8,
-    status: "active"
-}, {
-    name: "test 2",
-    phone: "9999345364",
-    email: "test@test.com",
-    date: "2021-02-12T14:46:12.387Z",
-    duration: 3,
-    status: "offline"
-},
-{
-    name: "test 3",
-    phone: "9999345364",
-    email: "test@test.com",
-    date: "2021-02-02T14:46:12.387Z",
-    duration: 4,
-    status: "active"
-}]
 const StudentList = (props) => {
-    const { navigation } = props
+    const { navigation, userData } = props
+
+    const [studentList, setStudentList] = useState([])
+    const auth = useSelector(state => state.auth);
+    const dispatch = useDispatch();
+    const userToken = auth.token ? auth.token : null;
+    const Axios = axios(userToken);
+
+    useEffect(() => {
+        getData()
+    }, []);
+
+    const getData = async () => {
+        await Axios.get(API.studentList(userData.id)).then(response => {
+            if (response.status === 200) {
+                const data = response.data;
+                if (data) {
+                    setStudentList(data)
+                    console.log('====================================');
+                    console.log("data ==> ", JSON.stringify(data));
+                    console.log('====================================');
+                }
+            }
+        }).catch(err => console.log(err));
+    };
+
     return (<>
         <Header
             backgroundColor="#FFF"
@@ -44,28 +50,28 @@ const StudentList = (props) => {
         />
         <View style={{ flex: 1 }}>
             <FlatList
-                data={data}
+                data={studentList}
                 keyExtractor={(item, index) => index.toString()}
                 style={{ marginTop: 12 }}
                 renderItem={({ item, index }) => {
-                    return (<Pressable onPress={() => navigation.navigate("StudentDetails", { item })} style={{ height: height * 0.11, marginHorizontal: width * 0.05, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 20, elevation: 4, borderRadius: 6 }}>
-                        <View style={{ width: height * 0.07 }}>
-                            <Image source={require("../../assets/profile-image-placeholder.png")} style={{ flex: 1, width: height * 0.06, }} resizeMode="contain" />
+                    return (<Pressable onPress={() => navigation.navigate("StudentDetails", { item })} style={{ height: HEIGHT * 0.11, marginHorizontal: WIDTH * 0.05, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 20, elevation: 4, borderRadius: 6 }}>
+                        <View style={{ width: HEIGHT * 0.07 }}>
+                            <Image defaultSource={require("../../assets/profile-image-placeholder.png")} source={item.photo ? { uri: `${BASE_URL}profilepics/${item.photo}` } : require("../../assets/profile-image-placeholder.png")} style={{ flex: 1, width: HEIGHT * 0.06, }} resizeMode={item.photo ? "cover" : "contain"} />
                         </View>
-                        <View style={{ flex: 1, justifyContent: "space-between", }}>
+                        <View style={{ flex: 1, justifyContent: "space-between" }}>
                             <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>{item.name}</Text>
-                            <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.phone}</Text>
-                            <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.email}</Text>
+                            <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.mobile_no}</Text>
+                            <Text numberOfLines={1} style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.email}</Text>
                         </View>
-                        <View style={{ width: width * 0.3, justifyContent: "space-evenly", flexDirection: "row", alignItems: "center" }}>
+                        <View style={{ width: WIDTH * 0.25, justifyContent: "space-evenly", flexDirection: "row", alignItems: "center" }}>
                             <Pressable>
                                 <Icon type="material" name='email' color='#3951B6' size={26} />
                             </Pressable>
                             <View style={{
-                                width: width * 0.06, height: width * 0.06, borderRadius: width * 0.03,
-                                backgroundColor: item.status == "active" ? "green" : "gray", justifyContent: "center"
+                                width: WIDTH * 0.06, height: WIDTH * 0.06, borderRadius: WIDTH * 0.03,
+                                backgroundColor: item.status == "Active" ? "green" : "gray", justifyContent: "center"
                             }}>
-                                <Icon type="material" name={item.status == "active" ? "done" : "close"} color='#FFF' size={20} />
+                                <Icon type="material" name={item.status == "Active" ? "done" : "close"} color='#FFF' size={20} />
                             </View>
                         </View>
                     </Pressable>)
@@ -76,7 +82,16 @@ const StudentList = (props) => {
     )
 }
 
-export default StudentList
+const mapStateToProps = (state /*, ownProps*/) => {
+    const { userData } = state.auth
+    return {
+        userData: userData,
+    }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(StudentList)
 
 const styles = StyleSheet.create({
     headercontainer: {

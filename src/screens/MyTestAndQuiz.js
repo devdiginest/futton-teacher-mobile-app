@@ -1,43 +1,40 @@
 import React, { useState, useEffect } from "react"
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, Pressable, Animated, Easing } from 'react-native'
-import { Header, Icon } from 'react-native-elements';
+import { View, Text, StyleSheet, FlatList, Dimensions, Pressable } from 'react-native'
+import { Header } from 'react-native-elements';
+import { useDispatch, useSelector } from 'react-redux';
+import LinearGradient from 'react-native-linear-gradient';
+import _ from "lodash"
+
 import { HEIGHT, WIDTH } from "../constants";
+import axios from '../components/Axios';
+import API from "./../config/api"
 
-const { height, width } = Dimensions.get("screen")
-
-
-const data = [{
-    title: "Rank Test",
-    type: "test",
-    course: "Astro Physics",
-    subject: "MATHS",
-    lesson: "Problem Solving",
-    date: "2021-02-21T14:46:12.387Z",
-    duration: 8,
-    status: "approved"
-}, {
-    title: "Forensic",
-    type: "quizz",
-    course: "Malayalam course",
-    subject: "Malayalam",
-    lesson: "Test",
-    date: "2021-02-12T14:46:12.387Z",
-    duration: 3,
-    status: "rejected"
-},
-{
-    title: "NEW TEST FIVE",
-    type: "daily quizz",
-    course: "Physics course",
-    subject: "Physics",
-    lesson: "Problem Solving",
-    date: "2021-02-02T14:46:12.387Z",
-    duration: 4,
-    status: "pending"
-}]
+const colors = [['#0066D1', '#03C0C7'], ['#FF5733', '#FCB301'], ['#BA0000', '#FC0000']]
 
 const MyTestAndQuiz = (props) => {
     const { navigation } = props
+    const [testList, setTestList] = useState([])
+    const auth = useSelector(state => state.auth);
+    const dispatch = useDispatch();
+    const userToken = auth.token ? auth.token : null;
+    const Axios = axios(userToken);
+
+
+    useEffect(() => {
+        getData()
+    }, []);
+
+    const getData = async () => {
+        await Axios.get(API.testQuizz).then(response => {
+            if (response.status === 200) {
+                const data = response.data;
+                if (data) {
+                    setTestList(data)
+                }
+            }
+        }).catch(err => console.log(err));
+    };
+
 
     return (<>
         <Header
@@ -52,27 +49,35 @@ const MyTestAndQuiz = (props) => {
         />
         <View style={{ flex: 1, }}>
             <FlatList
-                data={data}
+                data={testList}
                 keyExtractor={(item, index) => index.toString()}
                 style={{ marginTop: 12 }}
                 renderItem={({ item, index }) => {
-                    return (<TouchableOpacity onPress={() => navigation.navigate("TestDetails", { item })} style={{ marginHorizontal: width * 0.05, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 20, elevation: 4, borderRadius: 6 }}>
+                    return (<Pressable onPress={() => navigation.navigate("TestDetails", { item })} style={{ marginHorizontal: WIDTH * 0.05, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 20, elevation: 4, borderRadius: 6, }}>
+                        <View style={{ position: "absolute", width: WIDTH * 0.25, height: HEIGHT * 0.03, right: 0, borderTopRightRadius: 6, overflow: "hidden" }}>
+                            <LinearGradient style={{ flex: 1, justifyContent: "center", alignItems: "center" }} colors={colors[item.status]}
+                                start={{ x: 0, y: 0.5 }}
+                                end={{ x: 1, y: 0.5 }}>
+                                <Text style={{ color: '#FFF', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.status == 0 ? "Approved" : item.status == 1 ? "Pending" : "Rejected"}</Text>
+                            </LinearGradient>
+
+                        </View>
                         <View style={{ flex: 1, justifyContent: "space-between", }}>
-                            <Text style={{ color: '#262626', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>{`${item.title} - `}<Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.type}</Text></Text>
-                            <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Course :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.course}</Text></Text>
+                            <Text numberOfLines={1} style={{ width: WIDTH * 0.6, color: '#262626', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>{`${item.title} - `}<Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.exam_type == "1" ? "Test" : "Quizz"}</Text></Text>
+                            <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Course :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.courses[0].name}</Text></Text>
                             <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Subject :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.subject}</Text></Text>
                             <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Lesson :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.lesson}</Text></Text>
                         </View>
-                        <View style={{ width: width * 0.1, justifyContent: "space-evenly", flexDirection: "row", alignItems: "center", }}>
+                        {/*  <View style={{ width: width * 0.1, justifyContent: "space-evenly", flexDirection: "row", alignItems: "center", }}>
                             <View style={{
                                 width: width * 0.06, height: width * 0.06, borderRadius: width * 0.03,
-                                backgroundColor: item.status == "approved" ? "green" : item.status == "pending" ? "orange" : "red", justifyContent: "center"
+                                backgroundColor: item.status == 0 ? "green" : item.status == 1 ? "orange" : "red", justifyContent: "center"
                             }}>
-                                <Icon type="material" name={item.status == "approved" ? "done" : item.status == "pending" ? "query-builder" : "priority-high"} color='#FFF' size={20} />
+                                <Icon type="material" name={item.status == 0 ? "done" : item.status == 1 ? "query-builder" : "priority-high"} color='#FFF' size={20} />
                             </View>
 
-                        </View>
-                    </TouchableOpacity>)
+                        </View> */}
+                    </Pressable>)
                 }}
             />
         </View>

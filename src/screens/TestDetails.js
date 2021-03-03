@@ -5,7 +5,7 @@ import { HEIGHT, WIDTH } from "../constants";
 const lessons = ["Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s standard dummy text ever since the 1500s"]
 const TestDetails = (props) => {
     const { navigation, route: { params: { item = {} } = { item: {} } } } = props
-
+    const { questions = [] } = item
     return (<>
         <Header
             backgroundColor="#FFF"
@@ -20,8 +20,8 @@ const TestDetails = (props) => {
         />
         <View style={{ flex: 1, backgroundColor: "#FFF" }}>
             <View style={{ height: HEIGHT * 0.15, paddingHorizontal: WIDTH * 0.05, justifyContent: "space-evenly", }}>
-                <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Type :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.type}</Text></Text>
-                <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Course :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.course}</Text></Text>
+                <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Exam type :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.exam_type == "1" ? "Test" : "Quizz"}</Text></Text>
+                <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Course :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.courses[0].name}</Text></Text>
                 <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Subject :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.subject}</Text></Text>
                 <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System', }}>{`Lesson :- `}<Text style={{ color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System' }}>{item.lesson}</Text></Text>
             </View>
@@ -29,11 +29,16 @@ const TestDetails = (props) => {
                 <Text style={{ color: '#262626', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>Questions</Text>
                 <FlatList
                     showsHorizontalScrollIndicator={false}
-                    data={lessons}
+                    data={questions}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={({ item, index }) => <View style={{ borderBottomWidth: 0.5, padding: HEIGHT * 0.01, }}>
                         <View style={{ flex: 1, justifyContent: "center", borderColor: "#3951B6" }}>
-                            <Text style={{ fontSize: 12, fontFamily: "System", color: "#3951B6", fontWeight: "bold" }}><Text style={{ color: '#262626', fontSize: 14, fontWeight: 'bold', fontFamily: 'System', }}>{`${index + 1}, `}</Text>{item}</Text>
+                            <Text style={{ fontSize: 12, fontFamily: "System", color: "#3951B6", fontWeight: "bold" }}><Text style={{ color: '#262626', fontSize: 14, fontWeight: 'bold', fontFamily: 'System', }}>{`${index + 1}, `}</Text>{item.question}</Text>
+                        </View>
+                    </View>}
+                    ListEmptyComponent={() => <View style={{ borderBottomWidth: 0.5, padding: HEIGHT * 0.01, }}>
+                        <View style={{ flex: 1, justifyContent: "center", borderColor: "#3951B6" }}>
+                            <Text style={{ fontSize: 12, fontFamily: "System", color: "#3951B6", fontWeight: "bold" }}>No questions found</Text>
                         </View>
                     </View>}
                 />
