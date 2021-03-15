@@ -1,6 +1,6 @@
-import React                 from 'react';
+import React from 'react';
 import { ActivityIndicator } from 'react-native';
-import { StyleSheet, View }  from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 export default function Loading() {
   return (

@@ -62,12 +62,15 @@ export default function Login({ navigation }) {
 
       <View style={styles.inputscontainer}>
         <Input
+          autoCapitalize="none"
+          keyboardType={"email-address"}
           containerStyle={styles.inputouter}
           inputContainerStyle={styles.inputinner}
           inputStyle={styles.input}
           placeholder="Email Address"
           onChangeText={text => { setEmail(text) }} />
         <InputPasswordToggle
+          autoCapitalize="none"
           value={password}
           style={styles.pinputouter}
           iconColor="#CCC"

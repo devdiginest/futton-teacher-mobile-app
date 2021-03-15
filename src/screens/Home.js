@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, Image, ScrollView, StatusBar } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native';
+import { FlatList, Image, ScrollView, StatusBar, StyleSheet, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SliderBox } from 'react-native-image-slider-box';
-import { useDispatch, useSelector } from 'react-redux';
-import axios from '../components/Axios';
+import { useDispatch, useSelector, connect } from 'react-redux';
+import { Text, Icon } from 'react-native-elements';
 import _ from "lodash"
+import { TabActions } from '@react-navigation/native';
+import axios from '../components/Axios';
 import API from "./../config/api"
 import { API_URL, BASE_URL } from "./../config/Constants"
 import { setProfileData } from "../actions/Auth"
-import { CourseComponent } from "./../components"
+import { CourseComponent, EmptyList, Loader } from "./../components"
+import { HEIGHT, WIDTH } from "../constants"
 
-export default function Home({ navigation }) {
+function Home({ navigation, userData }) {
   const [loading, setLoading] = useState(true);
-  const [uCourses, setUCourses] = useState({});
-  const [oCourses, setOCourses] = useState({});
+  const [uCourses, setUCourses] = useState([]);
+  const [oCourses, setOCourses] = useState([]);
   const [slider, setSlider] = useState([]);
 
   const auth = useSelector(state => state.auth);
@@ -23,15 +24,12 @@ export default function Home({ navigation }) {
   const userToken = auth.token ? auth.token : null;
   const Axios = axios(userToken);
 
-  const showMyCoursesTab = () => {
-    navigation.navigate('My Courses', { route: "Upcoming" });
+  const showMyCoursesTab = (route = "Upcoming") => {
+    //const jumpToAction = TabActions.jumpTo('My Courses', { screen: 'MyCourses', params: { route } });
+    //navigation.dispatch(jumpToAction);
+    navigation.navigate('My Courses', { route })
   }
-  const showMyCoursesTab2 = () => {
-    navigation.navigate('My Courses', { route: "Ongoing" });
-  }
-  const showClassroom = () => {
-    navigation.navigate('Classroom');
-  }
+
 
   const getHomeData = async () => {
     await Axios
@@ -40,12 +38,13 @@ export default function Home({ navigation }) {
         if (response.status === 200) {
           const data = response.data;
           if (data) {
-            setUCourses(data.upcoming);
-            setOCourses(data.ongoing);
+            setUCourses(_.unionBy(data.upcoming, "id"));
+            setOCourses(_.unionBy(data.ongoing, "id"));
           }
         }
       })
       .catch(err => console.log(err));
+    setLoading(false)
   };
 
   const getHomeSliderData = async () => {
@@ -85,13 +84,43 @@ export default function Home({ navigation }) {
     getProfile()
   }, []);
 
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ backgroundColor: "#FFF", flex: 1 }}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView style={styles.container}>
+      <View style={{ height: HEIGHT * 0.07, width: WIDTH, paddingHorizontal: WIDTH * 0.05, alignItems: "center", flexDirection: "row", backgroundColor: "#3951B6" }}>
+        <Image
+          style={{ height: HEIGHT * 0.06, width: HEIGHT * 0.06, borderWidth: 1, borderRadius: HEIGHT * 0.03 }}
+          source={userData.photo ? { uri: `${BASE_URL}profilepics/${userData.photo}` } : require("../../assets/profile-image-placeholder.png")}
+          resizeMode="cover"
+        />
+        <View style={{ marginLeft: WIDTH * 0.05, flex: 1 }}>
+          <Text style={{
+            color: '#FFF',
+            fontSize: 16,
+            fontWeight: '700',
+            fontFamily: 'System',
+          }}>{userData.name}</Text>
+          <Text style={{
+            color: '#C7C7C7',
+            fontSize: 12,
+            fontWeight: '700',
+            fontFamily: 'System',
+          }}>{userData.email}</Text>
+        </View>
+        <Pressable onPress={() => navigation.navigate("Notifications")} style={{ width: WIDTH * 0.1, height: "100%", justifyContent: "center" }}>
+          <Icon size={24} name='bell' type='simple-line-icon' color='#FFF' />
+        </Pressable>
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.container}>
         <SliderBox
           images={slider}
-          dotColor="#7C98FD"
+          dotColor="#3951B6"
           inactiveDotColor="#FFF"
           sliderBoxHeight={292}
           autoplay />
@@ -100,31 +129,35 @@ export default function Home({ navigation }) {
           <View style={styles.ongcourses}>
             <View style={styles.ongcoursesheader}>
               <Text style={styles.secheading}>Upcoming Courses</Text>
-              <Text style={styles.secviewall} onPress={showMyCoursesTab}>View all</Text>
+              <Text style={styles.secviewall} onPress={() => showMyCoursesTab()}>View all</Text>
             </View>
 
             <FlatList
               data={uCourses}
               style={styles.courses}
-              keyExtractor={(item) => { return item.id.toString(); }}
+              keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => {
                 return (<CourseComponent item={item} />)
-              }} />
+              }}
+              ListEmptyComponent={<EmptyList />}
+            />
           </View>
 
           <View style={styles.allcourses}>
             <View style={styles.allcoursesheader}>
               <Text style={styles.secheading}>Ongoing Courses</Text>
-              <Text style={styles.secviewall} onPress={showMyCoursesTab2}>View all</Text>
+              <Text style={styles.secviewall} onPress={() => showMyCoursesTab("Ongoing")}>View all</Text>
             </View>
 
             <FlatList
               data={oCourses}
               style={styles.courses}
-              keyExtractor={(item) => { return item.id.toString(); }}
+              keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => {
                 return (<CourseComponent item={item} />)
-              }} />
+              }}
+              ListEmptyComponent={<EmptyList />}
+            />
           </View>
         </View>
       </ScrollView>
@@ -132,9 +165,21 @@ export default function Home({ navigation }) {
   );
 }
 
+
+const mapStateToProps = (state /*, ownProps*/) => {
+  const { userData } = state.auth
+  return {
+    userData: userData,
+  }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home)
+
 const styles = StyleSheet.create({
   container: {
-    height: '100%',
+    // height: '100%',
     backgroundColor: '#FFF'
   },
   coursesContainer: {

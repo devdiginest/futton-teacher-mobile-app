@@ -27,9 +27,7 @@ export default function ForgotPassword({ navigation }) {
         showToast('Enter a valid Email address!', ToastAndroid.SHORT);
       } else {
         setLoading(true);
-
-        Axios
-          .post('fpassword', { email: email })
+        Axios.post('fpassword', { email: email })
           .then(response => {
             setLoading(false);
 
@@ -65,6 +63,8 @@ export default function ForgotPassword({ navigation }) {
 
         <View style={styles.inputscontainer}>
           <Input
+            autoCapitalize="none"
+            keyboardType="email-address"
             containerStyle={styles.inputouter}
             inputContainerStyle={styles.inputinner}
             inputStyle={styles.input}

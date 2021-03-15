@@ -8,12 +8,14 @@ import _ from "lodash"
 import { HEIGHT, WIDTH } from "../constants";
 import axios from '../components/Axios';
 import API from "./../config/api"
+import { Loader } from "../components"
 
 const colors = [['#0066D1', '#03C0C7'], ['#FF5733', '#FCB301'], ['#BA0000', '#FC0000']]
 
 const MyTestAndQuiz = (props) => {
     const { navigation } = props
     const [testList, setTestList] = useState([])
+    const [loading, setLoading] = useState(true)
     const auth = useSelector(state => state.auth);
     const dispatch = useDispatch();
     const userToken = auth.token ? auth.token : null;
@@ -33,8 +35,12 @@ const MyTestAndQuiz = (props) => {
                 }
             }
         }).catch(err => console.log(err));
+        setLoading(false)
     };
 
+    if (loading) {
+        return <Loader />;
+    }
 
     return (<>
         <Header

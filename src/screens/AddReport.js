@@ -1,20 +1,51 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, Dimensions, TextInput, TouchableWithoutFeedback, Pressable, Keyboard, Alert } from 'react-native'
 import { Header, Icon, BottomSheet, ListItem, Input, Button } from "react-native-elements"
 import _ from "lodash"
 import RNPickerSelect from 'react-native-picker-select';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import LinearGradient from 'react-native-linear-gradient';
-
+import { connect, useSelector } from 'react-redux';
+import API from "../config/api"
+import axios from '../components/Axios';
+import { Loader } from "../components"
 const { height, width } = Dimensions.get("screen")
 
-const subjects = [{ label: 'MATHS', value: 'MATHS' }, { label: 'Malayalam', value: 'Malayalam' }, { label: 'Physics', value: 'Physics' }]
 
 const AddReport = (props) => {
-    const { navigation, route: { params: { item = null } = { item: null } } } = props
+    const { navigation, route: { params: { item = null } = { item: null } }, userData } = props
 
+    const auth = useSelector(state => state.auth);
+    const userToken = auth.token ? auth.token : null;
+    const Axios = axios(userToken);
+
+    const [loading, setLoading] = useState(true)
+    const [apiloading, setApiLoading] = useState(false)
     const [dateShow, setDateShow] = useState(false)
     const [data, setData] = useState(item)
+    const [subjects, setSubjects] = useState([])
+
+    useEffect(() => {
+        getSubjects()
+    }, [])
+
+    const getSubjects = async () => {
+        await Axios.get(API.subjects)
+            .then(response => {
+                if (response.status === 200) {
+                    const data = response.data;
+                    if (data) {
+                        const temp = []
+                        data.forEach(({ name, id }) => {
+                            temp.push({ label: name, value: id })
+                        })
+                        setSubjects(temp);
+                    }
+                }
+            }).catch(err => console.log(err));
+        setLoading(false)
+    };
+
 
     const setValues = (type, value) => {
         const temp = data == null ? {} : data
@@ -23,17 +54,57 @@ const AddReport = (props) => {
     }
 
     const save = () => {
+        setApiLoading(true)
         if (_.isEmpty(data)) {
             Alert.alert("Error", 'Data empty')
         } else if (!_.has(data, "date") || _.isNull(data.date)) {
             Alert.alert("Error", 'date')
-        } else if (!_.has(data, "subject") || _.isNull(data.subject)) {
+        } else if (!_.has(data, "subject_id") || _.isNull(data.subject_id)) {
             Alert.alert("Error", 'subject')
-        } else if (!_.has(data, "duration") || _.isNull(data.duration)) {
-            Alert.alert("Error", 'duration')
+        } else if (!_.has(data, "working_hours") || _.isNull(data.working_hours)) {
+            Alert.alert("Error", 'workinghours')
         } else {
-            navigation.goBack()
+            addReport()
         }
+    }
+
+    const addReport = async () => {
+        let body = data
+        body.teacher_id = userData.id
+        body.profile = "Jd3kyosci1sCSyeOo9sX1c9P"
+        body.working_hours = Number(data.working_hours)
+        const date = new Date(data.date)
+        const year = date.getFullYear()
+        const month = (date.getMonth() + 1) < 10 ? `0${date.getMonth() + 1}` : date.getMonth() + 1
+        const day = date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+        body.date = `${year}-${month}-${day}`
+
+        if (item == null) {
+            await Axios.post(API.addDailyReport, data).then(response => {
+                if (response.status && response.status) {
+                    const data = response.data;
+                    if (data) {
+                        navigation.goBack()
+                    }
+                }
+            }).catch(err => console.log(err))
+        } else {
+            body.id = data.reportid
+            body.status = 1
+            await Axios.put(API.updateDailyReport, data).then(response => {
+                if (response.status && response.status) {
+                    const data = response.data;
+                    if (data) {
+                        navigation.goBack()
+                    }
+                }
+            }).catch(err => console.log(err));
+        }
+        setApiLoading(false)
+    };
+
+    if (loading) {
+        return <Loader />;
     }
 
     return (<>
@@ -63,7 +134,7 @@ const AddReport = (props) => {
                 <Pressable onPress={() => setDateShow(true)} style={{ borderRadius: width * 0.02, padding: width * 0.03, marginBottom: width * 0.05, height: height * 0.11, flexDirection: "row", backgroundColor: "#FFF" }}>
                     <View style={{ justifyContent: "space-between", flex: 1 }}>
                         <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Date</Text>
-                        <Text style={{ color: '#000', fontSize: 14, fontWeight: '500', fontFamily: 'System', marginBottom: height * 0.01 }}>{_.has(data, "date") ? new Date(data.date).toDateString() : new Date().toDateString()}</Text>
+                        <Text style={{ color: '#000', fontSize: 14, fontWeight: '500', fontFamily: 'System', marginBottom: height * 0.01 }}>{_.has(data, "date") ? new Date(data.date).toDateString() : "Choose date"}</Text>
                     </View>
                     <View style={{ justifyContent: "center" }}>
                         <Icon type="antdesign" name="calendar" color='#3951B6' size={26} />
@@ -83,9 +154,9 @@ const AddReport = (props) => {
                     <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Subject</Text>
                     <RNPickerSelect
                         placeholder={{ label: "Select subject" }}
-                        onValueChange={(value) => setValues("subject", value)}
+                        onValueChange={(value) => setValues("subject_id", value)}
                         items={subjects}
-                        value={_.has(data, "subject") ? data.subject : ""}
+                        value={_.has(data, "subject_id") ? data.subject_id : ""}
                         style={{
                             inputIOS: {
                                 fontSize: 16,
@@ -116,8 +187,8 @@ const AddReport = (props) => {
                         <TextInput
                             keyboardType="number-pad"
                             placeholder="Enter the duration"
-                            onChangeText={text => { setValues("duration", text) }}
-                            value={_.has(data, "duration") ? data.duration.toString() : ""}
+                            onChangeText={text => { setValues("working_hours", text) }}
+                            value={_.has(data, "working_hours") ? data.working_hours.toString() : ""}
                         />
                     </View>
                     <View style={{ justifyContent: "center" }}>
@@ -137,7 +208,7 @@ const AddReport = (props) => {
                         fontFamily: 'System',
                         borderRadius: 5
                     }}
-                    //loading={auth.loggingIn}
+                    loading={apiloading}
                     linearGradientProps={{
                         colors: ['#0066D1', '#03C0C7'],
                         start: { x: 0, y: 0.5 },
@@ -153,4 +224,13 @@ const AddReport = (props) => {
     )
 }
 
-export default AddReport
+const mapStateToProps = (state /*, ownProps*/) => {
+    const { userData } = state.auth
+    return {
+        userData: userData,
+    }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(AddReport)

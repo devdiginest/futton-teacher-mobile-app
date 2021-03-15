@@ -3,15 +3,16 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Pressable } 
 import { Header, Icon } from 'react-native-elements';
 import { useDispatch, useSelector } from 'react-redux';
 import { connect } from "react-redux"
+import _ from "lodash"
 
 import { HEIGHT, WIDTH } from "../constants";
 import axios from '../components/Axios';
 import API from "./../config/api"
 import { BASE_URL } from "../config/Constants"
-
+import { Loader, EmptyList } from "../components"
 const StudentList = (props) => {
     const { navigation, userData } = props
-
+    const [loading, setLoading] = useState(true)
     const [studentList, setStudentList] = useState([])
     const auth = useSelector(state => state.auth);
     const dispatch = useDispatch();
@@ -27,14 +28,16 @@ const StudentList = (props) => {
             if (response.status === 200) {
                 const data = response.data;
                 if (data) {
-                    setStudentList(data)
-                    console.log('====================================');
-                    console.log("data ==> ", JSON.stringify(data));
-                    console.log('====================================');
+                    setStudentList(_.unionBy(data, "id"))
                 }
             }
         }).catch(err => console.log(err));
+        setLoading(false)
     };
+
+    if (loading) {
+        return <Loader />;
+    }
 
     return (<>
         <Header
@@ -50,6 +53,7 @@ const StudentList = (props) => {
         />
         <View style={{ flex: 1 }}>
             <FlatList
+                showsVerticalScrollIndicator={false}
                 data={studentList}
                 keyExtractor={(item, index) => index.toString()}
                 style={{ marginTop: 12 }}
@@ -63,10 +67,10 @@ const StudentList = (props) => {
                             <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.mobile_no}</Text>
                             <Text numberOfLines={1} style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.email}</Text>
                         </View>
-                        <View style={{ width: WIDTH * 0.25, justifyContent: "space-evenly", flexDirection: "row", alignItems: "center" }}>
-                            <Pressable>
+                        <View style={{ width: WIDTH * 0.15, justifyContent: "space-evenly", flexDirection: "row", alignItems: "center" }}>
+                            {/*  <Pressable>
                                 <Icon type="material" name='email' color='#3951B6' size={26} />
-                            </Pressable>
+                            </Pressable> */}
                             <View style={{
                                 width: WIDTH * 0.06, height: WIDTH * 0.06, borderRadius: WIDTH * 0.03,
                                 backgroundColor: item.status == "Active" ? "green" : "gray", justifyContent: "center"
@@ -76,6 +80,7 @@ const StudentList = (props) => {
                         </View>
                     </Pressable>)
                 }}
+                ListEmptyComponent={<EmptyList />}
             />
         </View>
     </>

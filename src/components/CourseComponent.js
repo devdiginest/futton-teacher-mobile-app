@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-
+import _ from "lodash"
 import { BASE_URL } from "./../config/Constants"
 
 const CourseComponent = (props) => {
@@ -9,8 +9,12 @@ const CourseComponent = (props) => {
     const { item, } = props
     const navigation = useNavigation()
 
+    const checkURL = (url) => {
+        return (url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+    }
+
     return (<Pressable style={styles.course} onPress={() => navigation.navigate('Classroom', { item })}>
-        <Image style={styles.cimg} defaultSource={require('../../assets/img-course.png')} source={{ uri: `${BASE_URL}/${item.thumbnail}` }} />
+        <Image style={styles.cimg} defaultSource={require('../../assets/futton-logo.png')} source={_.has(item, "thumbnail") && !_.isNull(item.thumbnail) && checkURL(item.thumbnail) ? { uri: `${BASE_URL}storage/${item.thumbnail}` } : require('../../assets/futton-logo.png')} resizeMode="contain" />
         <View style={styles.cdetails}>
             <Text style={{
                 color: '#262626', fontSize: 16, fontWeight: "700", fontFamily: 'System',
@@ -18,9 +22,9 @@ const CourseComponent = (props) => {
             <Text style={{
                 color: '#C7C7C7', fontSize: 14, fontWeight: '400', fontFamily: 'System'
             }}>{item.subjectname}</Text>
-            <Text style={{
+            {_.has(item, 'start_date') && _.has(item, 'énd_date') && <Text style={{
                 color: '#3951B6', fontSize: 12, fontWeight: 'bold', fontFamily: 'System'
-            }}>{`${item.start_date} to ${item.end_date}`}</Text>
+            }}>{`${item.start_date} to ${item.end_date}`}</Text>}
             {/*  <View style={styles.cratingsnreviews}>
                 <Image style={styles.cstar} source={require('../../assets/img-course-star.png')} />
                 <Text style={styles.cratings}>{item.ratings != null ? item.ratings.substring(0, 3) : 0}</Text>
@@ -78,10 +82,11 @@ const styles = StyleSheet.create({
         borderRadius: 6
     },
     cimg: {
-        width: 100
+        width: 100,
+        height: 70
     },
     cdetails: {
-        marginLeft: 15
+        marginLeft: 15, justifyContent: "space-evenly"
     },
     cname: {
         color: '#262626',

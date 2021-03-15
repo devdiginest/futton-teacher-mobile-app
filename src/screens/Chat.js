@@ -1,14 +1,15 @@
 import React, { Fragment } from 'react';
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { Text, View } from 'react-native';
-import { Header } from 'react-native-elements';
+import { StyleSheet, Text, View, Image, SafeAreaView, Pressable } from 'react-native';
+import { Header, Icon } from 'react-native-elements';
 import { GiftedChat, Bubble } from 'react-native-gifted-chat';
 import firestore from '@react-native-firebase/firestore';
 import { connect } from "react-redux"
+import { BASE_URL } from "./../config/Constants"
+import { HEIGHT, WIDTH } from '../constants';
 
 function Chat({ route, navigation, userData }) {
-  const { thread } = route.params;
+  const { thread, receiverData } = route.params;
   const [messages, setMessages] = useState([]);
 
   const loadMessagesScreen = () => {
@@ -18,22 +19,36 @@ function Chat({ route, navigation, userData }) {
   async function handleSend(messages) {
     const text = messages[0].text;
 
+    const newMsg = {
+      text,
+      createdAt: new Date().getTime(),
+      sender: { id: userData.id, name: userData.name },
+      user: {
+        _id: userData.id,
+
+        // email : currentUser.email
+        //_id: "7XdHMylSf5hnyj3CfGBjHjCdo2x2",
+        // email: "jkampadi@gmail.com"
+      }
+    }
     await firestore()
       .collection('chat-history')
       .doc(thread._id)
       .collection('chats')
-      .add({
-        text,
-        createdAt: new Date().getTime(),
-        sender: { id: userData.id, name: userData.name },
-        user: {
-          _id: userData.id,
+      .add(newMsg);
 
-          // email : currentUser.email
-          //_id: "7XdHMylSf5hnyj3CfGBjHjCdo2x2",
-          // email: "jkampadi@gmail.com"
-        }
-      });
+    const threadData = await firestore().collection('chat-history').doc(thread._id).get()
+    const fieldPath = new firestore.FieldPath("lastMessage")
+    const unreadMsgCount = new firestore.FieldPath("unreadMsgCount")
+
+    let lastMessage = []
+    if (threadData.get(fieldPath)) {
+      lastMessage = [...threadData.get(fieldPath), newMsg]
+    } else {
+      lastMessage = [newMsg]
+    }
+
+    await firestore().collection('chat-history').doc(thread._id).update({ lastMsgSender: userData.id, lastMessage: text, unreadMsgCount: firestore.FieldValue.increment(1), updatedAt: new Date().getTime() })
 
     /* await firestore()
       .collection('techerChats')
@@ -51,7 +66,6 @@ function Chat({ route, navigation, userData }) {
   useEffect(() => {
     const messagesListener = firestore().collection('chat-history').doc(thread._id).collection('chats').orderBy("createdAt", "desc")
       .onSnapshot((querySnapshot) => {
-
         const messages = querySnapshot.docs.map((doc) => {
           const firebaseData = doc.data();
           const data = {
@@ -64,14 +78,47 @@ function Chat({ route, navigation, userData }) {
               name: firebaseData.sender.name
             }
           }
-
+          setMsgReadStatus()
           return data;
         });
+
         setMessages(messages);
       });
 
+    setDetails()
+
+
     return () => messagesListener();
   }, []);
+
+  const setMsgReadStatus = async () => {
+    const threadData = await firestore().collection('chat-history').doc(thread._id).get()
+    const countPath = new firestore.FieldPath("unreadMsgCount")
+    const lastMsgSenderPath = new firestore.FieldPath("lastMsgSender")
+    if (lastMsgSenderPath && threadData.get(lastMsgSenderPath) && threadData.get(lastMsgSenderPath) != userData.id) {
+      if (countPath && threadData.get(countPath)) {
+        await firestore().collection('chat-history').doc(thread._id).update({ unreadMsgCount: firestore.FieldValue.delete() })
+      }
+    }
+  }
+
+  const setDetails = async () => {
+    const threadData = await firestore().collection('chat-history').doc(thread._id).get()
+    const fieldPath = new firestore.FieldPath("users")
+    const users = threadData.get(fieldPath)
+
+    const senderDetails = {}
+    senderDetails[userData.id] = userData
+    setMsgReadStatus()
+    if (users) {
+      if (users.filter((item) => item == userData.id).length == 0) {
+        users.push(userData.id)
+        await firestore().collection('chat-history').doc(thread._id).update({ users, ...senderDetails })
+      }
+    } else {
+      await firestore().collection('chat-history').doc(thread._id).update({ users: [userData.id], ...senderDetails })
+    }
+  }
 
   function renderBubble(props) {
     return (
@@ -89,12 +136,12 @@ function Chat({ route, navigation, userData }) {
   }
 
   return (
-    <Fragment>
-      <Header
+    <SafeAreaView style={{ flex: 1, borderWidth: 1 }}>
+      {/* <Header
         backgroundColor="#FFF"
         barStyle="dark-content"
         centerComponent={{
-          text: "Chat",
+          text: receiverData.name,
           style: styles.headercentercomp
         }}
         containerStyle={styles.headercontainer}
@@ -103,8 +150,30 @@ function Chat({ route, navigation, userData }) {
           color: '#3951B6',
           onPress: loadMessagesScreen
         }}
-        placement="left" />
-
+        placement="left" /> */}
+      <View style={{ marginTop: HEIGHT * 0.035, height: HEIGHT * 0.07, width: WIDTH, paddingHorizontal: WIDTH * 0.05, alignItems: "center", flexDirection: "row", backgroundColor: "#3951B6" }}>
+        <Pressable style={{ marginRight: WIDTH * 0.05 }} onPress={() => navigation.goBack()}><Icon type="material" name="arrow-back" color='#FFF' /></Pressable>
+        <Pressable style={{}} onPress={() => navigation.navigate("ChatInfo", { item: receiverData })}>
+          <Image
+            style={{ height: HEIGHT * 0.06, width: HEIGHT * 0.06, borderWidth: 1, borderRadius: HEIGHT * 0.03 }}
+            source={receiverData.photo ? { uri: `${BASE_URL}profilepics/${receiverData.photo}` } : require("../../assets/profile-image-placeholder.png")}
+            resizeMode="cover"
+          /></Pressable>
+        <View style={{ marginLeft: WIDTH * 0.05, flex: 1 }}>
+          <Text style={{
+            color: '#FFF',
+            fontSize: 16,
+            fontWeight: '700',
+            fontFamily: 'System',
+          }}>{receiverData.name}</Text>
+          <Text style={{
+            color: '#C7C7C7',
+            fontSize: 12,
+            fontWeight: '700',
+            fontFamily: 'System',
+          }}>{receiverData.email}</Text>
+        </View>
+      </View>
       <View style={{ flex: 1, backgroundColor: '#FFF' }}>
         <GiftedChat
           user={{ _id: userData.id }}
@@ -114,7 +183,8 @@ function Chat({ route, navigation, userData }) {
           alwaysShowSend
           onSend={handleSend} />
       </View>
-    </Fragment>
+
+    </SafeAreaView>
   );
 }
 

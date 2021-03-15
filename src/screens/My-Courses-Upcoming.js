@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, StatusBar } from 'react-native';
-import { Text, TouchableOpacity, View } from 'react-native';
+import _ from "lodash"
 import { useDispatch, useSelector } from 'react-redux';
-import axios from '../components/Axios';
 
-const screenData = [{
-  "id": 1,
-  "name": "GATE 2021 Alpha Batch",
-  "sdate": "20-11-2020"
-}, {
-  "id": 2,
-  "name": "Basic Intro to Chemistry",
-  "sdate": "20-11-2020"
-}];
+import axios from '../components/Axios';
+import { CourseComponent, EmptyList } from "./../components"
 
 export default function MyCoursesUpcoming({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -28,7 +20,7 @@ export default function MyCoursesUpcoming({ navigation }) {
         if (response.status === 200) {
           const data = response.data;
           if (data) {
-            setUCourses(data.upcoming);
+            setUCourses(_.unionBy(data.upcoming, "id"));
           }
         }
       })
@@ -44,20 +36,21 @@ export default function MyCoursesUpcoming({ navigation }) {
     <FlatList
       data={uCourses}
       style={styles.container}
-      keyExtractor={(item) => { return item.id.toString(); }}
+      keyExtractor={(item, index) => index.toString()}
       renderItem={({ item, index }) => {
-        return (
-          <TouchableOpacity style={styles.ocourse}>
-            <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
-
-            <View>
-              <Text style={styles.cname}>{item.name}</Text>
-              <Text style={styles.csdate}>Starting on {item.start_date}</Text>
-            </View>
-          </TouchableOpacity>
-        )
-      }
-      } />
+        /*  return (
+           <TouchableOpacity style={styles.ocourse}>
+             <Text style={styles.ocourseno}>{index < 10 ? ('0' + (++index)) : (++index)}</Text>
+             <View>
+               <Text style={styles.cname}>{item.name}</Text>
+               <Text style={styles.csdate}>Starting on {item.start_date}</Text>
+             </View>
+           </TouchableOpacity>
+         ) */
+        return (<CourseComponent item={item} />)
+      }}
+      ListEmptyComponent={() => <EmptyList />}
+    />
   </>
   );
 }

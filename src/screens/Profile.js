@@ -1,21 +1,52 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useRef } from 'react';
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View, TextInput, Keyboard, Platform } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import { Avatar, Button, Header, Text, Icon } from 'react-native-elements';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, connect } from 'react-redux';
 import axios from '../components/Axios';
 import { logout } from '../actions/Auth';
-import { log } from 'react-native-reanimated';
+import _ from "lodash"
 
-export default function Profile({ navigation }) {
+import { BASE_URL } from "./../config/Constants"
+import { Pressable } from 'react-native';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { setProfileData } from "../actions/Auth"
+
+function Profile({ navigation, userData }) {
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState({});
-
+  // const [profile, setProfile] = useState({});
+  const [editProfile, setEditProfile] = useState(false)
+  const [profileName, setProfileName] = useState(userData.name)
+  let inputRef = useRef(null)
   const auth = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const userToken = auth.token ? auth.token : null;
   const Axios = axios(userToken);
+
+  const setProfile = async (imageData = {}) => {
+    let data = new FormData()
+    data.append('id', userData.id)
+    data.append('name', profileName)
+
+    if (!_.isEmpty(imageData)) {
+      data.append('photo', {
+        name: imageData.fileName,
+        type: imageData.type,
+        uri: Platform.OS === 'android' ? imageData.uri : imageData.uri.replace('file://', ''),
+      })
+    }
+    await Axios.post('mobile/profile', data, { headers: { "Content-Type": "multipart/form-data" } })
+      .then(response => {
+        if (response.status && response.status) {
+          const data = response.data;
+          if (data) {
+            getProfile()
+          }
+        }
+      })
+      .catch(err => console.log("post ", err));
+  };
 
   const getProfile = async () => {
     await Axios
@@ -24,7 +55,7 @@ export default function Profile({ navigation }) {
         if (response.status === 200) {
           const data = response.data;
           if (data) {
-            setProfile(data);
+            dispatch(setProfileData(data));
           }
         }
       })
@@ -32,35 +63,48 @@ export default function Profile({ navigation }) {
   };
 
   useEffect(() => {
-    getProfile();
+    // getProfile();
   }, []);
 
-  return (
-    <Fragment>
-      <Header
-        backgroundColor="#FFF"
-        barStyle="dark-content"
-        centerComponent={{
-          text: "Profile",
-          style: styles.headercentercomp
-        }}
-        rightComponent={{ icon: 'edit', color: '#3951B6' }}
-        containerStyle={styles.headercontainer}
-        rightContainerStyle={styles.headerrightcontainer}
-        placement="left" />
-
+  return (<Fragment>
+    <Header
+      backgroundColor="#FFF"
+      barStyle="dark-content"
+      centerComponent={{
+        text: "Profile",
+        style: styles.headercentercomp
+      }}
+      // rightComponent={{ icon: 'edit', color: '#3951B6' }}
+      containerStyle={styles.headercontainer}
+      rightContainerStyle={styles.headerrightcontainer}
+      rightComponent={<TouchableOpacity onPress={() => {
+        setEditProfile(!editProfile)
+        try {
+          editProfile ? [setProfile(), Keyboard.dismiss()] : inputRef && inputRef.focus()
+        } catch (error) { }
+      }}>
+        <Icon type="material" name={editProfile ? "save" : "edit"} color='#3951B6' />
+      </TouchableOpacity>}
+      placement="left" />
+    <Pressable style={{ flex: 1 }} onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
         <Avatar
+          onPress={() => launchImageLibrary({ mediaType: "photo", maxHeight: 300, maxWidth: 300 }, (data) => setProfile(data))}
           activeOpacity={0.9}
           containerStyle={styles.avatar}
           rounded
           showAccessory={true}
-          source={require('../../assets/icon-msg-student5.png')}
+          source={userData.photo ? { uri: `${BASE_URL}profilepics/${userData.photo}` } : require("../../assets/profile-image-placeholder.png")}
           size="large" />
 
-        <Text style={styles.profilename}>{profile.name}</Text>
-        <Text style={styles.profileemail}>{profile.email}</Text>
-
+        <TextInput
+          ref={(rf) => inputRef = rf}
+          style={styles.profilename}
+          placeholder="Enter your name"
+          onChangeText={(text) => editProfile && setProfileName(text)}
+          value={profileName}
+        />
+        <Text style={styles.profileemail}>{userData.email}</Text>
         <View style={styles.actionbuttons}>
 
           <TouchableOpacity onPress={() => navigation.navigate("DailyReport")} style={[styles.actionbutton, styles.actionbutton1]}>
@@ -91,7 +135,7 @@ export default function Profile({ navigation }) {
               source={require('../../assets/icon-right-arrow.png')} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.actionbutton, styles.actionbutton1]}>
+          {/*  <TouchableOpacity style={[styles.actionbutton, styles.actionbutton1]}>
             <View style={styles.actionbuttonleft}>
               <View style={styles.actionbuttonicono}>
                 <View style={[styles.actionbuttonicon, styles.actionbuttonicon4]}>
@@ -103,7 +147,7 @@ export default function Profile({ navigation }) {
             <Image
               style={styles.buttonsubmiticon}
               source={require('../../assets/icon-right-arrow.png')} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity style={[styles.actionbutton]} onPress={() => dispatch(logout())}>
             <View style={styles.actionbuttonleft}>
@@ -121,9 +165,21 @@ export default function Profile({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-    </Fragment>
+    </Pressable>
+  </Fragment>
   );
 }
+
+const mapStateToProps = (state /*, ownProps*/) => {
+  const { userData } = state.auth
+  return {
+    userData: userData,
+  }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Profile)
 
 const styles = StyleSheet.create({
   headercontainer: {
@@ -147,7 +203,7 @@ const styles = StyleSheet.create({
   },
   avatar: {
     marginTop: 20,
-    alignSelf: 'center'
+    alignSelf: 'center',
   },
   profilename: {
     marginTop: 20,
@@ -155,7 +211,8 @@ const styles = StyleSheet.create({
     fontSize: 23,
     fontWeight: '700',
     fontFamily: 'System',
-    alignSelf: 'center'
+    alignSelf: 'center',
+    textAlign: "center"
   },
   profileemail: {
     color: '#8F9BB3',
@@ -166,7 +223,7 @@ const styles = StyleSheet.create({
   },
   actionbuttons: {
     marginTop: 40,
-    paddingHorizontal: 15
+    //paddingHorizontal: 15
   },
   actionbutton: {
     paddingVertical: 20,

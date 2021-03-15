@@ -44,6 +44,9 @@ export default function MyCourses(props) {
   }, []);
 
   useEffect(() => {
+    console.log('====================================');
+    console.log("props ==>", props.route);
+    console.log('====================================');
     if (_.has(props.route.params, "route")) {
       setTab(props.route.params.route)
     }

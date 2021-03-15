@@ -4,8 +4,8 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from '../components/Axios';
-import { CourseComponent } from "./../components"
-
+import { CourseComponent, EmptyList } from "./../components"
+import _ from "lodash"
 const screenData = [{
   "id": 1,
   "name": "Introduction to Learning Maths"
@@ -13,7 +13,7 @@ const screenData = [{
 
 export default function MyCoursesCompleted({ navigation }) {
   const [loading, setLoading] = useState(true);
-  const [cCourses, setCCourses] = useState({});
+  const [cCourses, setCCourses] = useState([]);
 
   const auth = useSelector(state => state.auth);
   const userToken = auth.token ? auth.token : null;
@@ -24,17 +24,14 @@ export default function MyCoursesCompleted({ navigation }) {
   }
 
   const getMyCourses = async () => {
-    await Axios
-      .get('mobile/mycourses')
-      .then(response => {
-        if (response.status === 200) {
-          const data = response.data;
-          if (data) {
-            setCCourses(data.completed);
-          }
+    await Axios.get('mobile/mycourses').then(response => {
+      if (response.status === 200) {
+        const data = response.data;
+        if (data) {
+          setCCourses(_.unionBy(data.completed, "id"));
         }
-      })
-      .catch(err => console.log(err));
+      }
+    }).catch(err => console.log(err));
   };
 
   useEffect(() => {
@@ -45,7 +42,7 @@ export default function MyCoursesCompleted({ navigation }) {
     <FlatList
       data={cCourses}
       style={styles.container}
-      keyExtractor={(item) => { return item.id.toString(); }}
+      keyExtractor={(item, index) => index.toString()}
       renderItem={({ item, index }) => {
         /*  return (
            <View style={styles.ocourse}>
@@ -68,8 +65,9 @@ export default function MyCoursesCompleted({ navigation }) {
            </View>
          ) */
         return (<CourseComponent item={item} />)
-      }
-      } />
+      }}
+      ListEmptyComponent={() => <EmptyList />}
+    />
   );
 }
 

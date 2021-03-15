@@ -1,8 +1,8 @@
 import React, { Fragment } from 'react';
 import { useEffect, useState } from 'react';
-import { FlatList, Image, StyleSheet, StatusBar } from 'react-native';
+import { FlatList, Image, StyleSheet, StatusBar, Pressable } from 'react-native';
 import { TouchableOpacity, View } from 'react-native';
-import { Header, Text } from 'react-native-elements';
+import { Header, Text, Icon } from 'react-native-elements';
 import { useSelector } from 'react-redux';
 import axios from '../components/Axios';
 
@@ -41,6 +41,7 @@ export default function Notifications({ navigation }) {
           text: "Notifications",
           style: styles.headercentercomp
         }}
+        leftComponent={<Pressable onPress={() => navigation.goBack()}><Icon type="material" name="arrow-back" color='#3951B6' /></Pressable>}
         containerStyle={styles.headercontainer}
         placement="left" />
       <StatusBar barStyle="dark-content" />

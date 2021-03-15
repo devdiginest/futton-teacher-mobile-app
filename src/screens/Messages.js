@@ -1,48 +1,25 @@
 import React, { Fragment } from 'react';
 import { useState, useEffect } from 'react';
-import { FlatList, Image, StyleSheet } from 'react-native';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { Header } from 'react-native-elements';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View, Pressable, Modal, TouchableWithoutFeedback, SectionList } from 'react-native';
+import { Header, Icon } from 'react-native-elements';
 import firestore from '@react-native-firebase/firestore';
-import { connect } from "react-redux"
 import Loading from '../components/Loading';
 import _ from 'lodash';
-
-const screenData = [{
-  id: 1,
-  image: "../../assets/icon-msg-student1.png",
-  name: "Student 1",
-  text: "Yah, I have 3 lessons for you.",
-  time: "30 min ago"
-}, {
-  id: 2,
-  image: "../../assets/icon-msg-student2.png",
-  name: "Student 2",
-  text: "Yah, I have 3 lessons for you.",
-  time: "Yesterday"
-}, {
-  id: 3,
-  image: "../../assets/icon-msg-student3.png",
-  name: "Student 3",
-  text: "Yah, I have 3 lessons for you.",
-  time: "11 Jan 2020"
-}, {
-  id: 4,
-  image: "../../assets/icon-msg-student4.png",
-  name: "Student 4",
-  text: "Yah, I have 3 lessons for you.",
-  time: "11 Jan 2020"
-}, {
-  id: 5,
-  image: "../../assets/icon-msg-student5.png",
-  name: "Student 5",
-  text: "Yah, I have 3 lessons for you.",
-  time: "11 Jan 2020"
-}];
+import { HEIGHT, WIDTH } from '../constants';
+import axios from '../components/Axios';
+import API from "./../config/api"
+import { BASE_URL } from "../config/Constants"
+import { useDispatch, useSelector, connect } from 'react-redux';
 
 function Messages({ navigation, userData }) {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(false)
+  const [sectionData, setSectionData] = useState([])
+  const auth = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+  const userToken = auth.token ? auth.token : null;
+  const Axios = axios(userToken);
 
   useEffect(() => {
     const unsubscribe = firestore().collection('chat-history').onSnapshot((querySnapshot) => {
@@ -52,14 +29,56 @@ function Messages({ navigation, userData }) {
           thread.push({ _id: documentSnapshot.id, ...documentSnapshot.data() });
         }
       });
-      setThreads(thread);
+      setThreads(_.orderBy(thread, 'updatedAt', 'desc'));
       if (loading) {
         setLoading(false);
       }
     });
-
+    getStudentList()
+    getAdminList()
     return () => unsubscribe();
   }, []);
+
+  const getStudentList = async () => {
+    await Axios.get(API.studentList(userData.id)).then(response => {
+      if (response.status === 200) {
+        const data = response.data;
+        if (data) {
+          sectionData.push({ title: "Students", data: _.unionBy(data, "id") })
+          setSectionData(sectionData)
+        }
+      }
+    }).catch(err => console.log(err));
+  };
+
+  const getAdminList = async () => {
+    await Axios.get(API.adminList).then(response => {
+      if (response.status === 200) {
+        const data = response.data;
+        if (data) {
+          sectionData.push({ title: "Admins", data: _.unionBy(data, "id") })
+          setSectionData(sectionData)
+        }
+      }
+    }).catch(err => console.log(err));
+  };
+
+  const createChat = (receiverData = {}) => {
+    const msg = threads.filter((item) => item._id.includes(receiverData.id))
+    setVisible(false)
+    if (msg.length > 0) {
+      navigation.navigate('Chat', { thread: msg[0], receiverData })
+    } else {
+      let setValues = {
+        users: [receiverData.id, userData.id]
+      }
+      setValues[receiverData.id] = receiverData
+      setValues[userData.id] = userData
+      setValues["updatedAt"] = new Date().getTime()
+      firestore().collection('chat-history').doc(`${userData.id}-${receiverData.id}`).set(setValues)
+      navigation.navigate('Chat', { thread: { _id: `${userData.id}-${receiverData.id}` }, receiverData })
+    }
+  }
 
   if (loading) {
     return <Loading />;
@@ -83,20 +102,38 @@ function Messages({ navigation, userData }) {
         ItemSeparatorComponent={() => { return (<View style={styles.separator} />) }}
         renderItem={item => {
           const msg = item.item;
+          const receiver = !_.isEmpty(msg.users) ? msg.users.filter((item) => item != userData.id) : []
+          const receiverData = receiver.length > 0 ? msg[receiver[0]] : {}
           return (
             <TouchableOpacity
               style={styles.ncontainer}
-              onPress={() => navigation.navigate('Chat', { thread: msg })}>
-              <Image style={styles.avatar} source={require('../../assets/icon-user-notification1.png')} />
-
-              <View style={styles.content}>
-                <View style={styles.message}>
-                  <Text style={styles.name}>{msg.name}</Text>
-                  <Text>No Messages</Text>
+              onPress={() => navigation.navigate('Chat', { thread: msg, receiverData })}>
+              <Image style={styles.avatar} source={receiverData.photo ? { uri: `${BASE_URL}profilepics/${receiverData.photo}` } : require("../../assets/profile-image-placeholder.png")} />
+              <View style={{ flex: 1, paddingLeft: WIDTH * 0.05, height: "100%", borderBottomWidth: 0, flexDirection: "row", justifyContent: "space-between", borderColor: "#3951B6" }}>
+                <View style={{}}>
+                  <Text style={{
+                    width: '100%',
+                    color: '#222B45',
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                  }}>{receiverData.name}</Text>
+                  <Text numberOfLines={2} style={{
+                    width: '100%',
+                    color: '#c7c7c7',
+                    fontSize: 15,
+                    fontWeight: '400',
+                  }}>{msg.lastMessage}</Text>
                 </View>
-
-                <Text style={styles.timeAgo}>{/*msg.latestMessage == null ? '' : msg.latestMessage.createdAt*/}</Text>
+                <View style={{ width: WIDTH * 0.1, alignItems: "center", justifyContent: "center" }}>
+                  {_.has(msg, "lastMsgSender") && msg.lastMsgSender != userData.id && _.has(msg, "unreadMsgCount") && msg.unreadMsgCount > 0 && <View style={{ width: WIDTH * 0.07, height: WIDTH * 0.07, borderRadius: WIDTH * 0.035, justifyContent: "center", alignItems: "center", backgroundColor: "green" }}>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold' }}>{msg.unreadMsgCount}</Text>
+                  </View>}
+                </View>
               </View>
+
+              {/*  <Text style={styles.timeAgo}>{/*msg.latestMessage == null ? '' : msg.latestMessage.createdAt}</Text>
+              </View> */}
+
             </TouchableOpacity>
           );
         }} />
@@ -127,6 +164,75 @@ function Messages({ navigation, userData }) {
             </TouchableOpacity>
           );
         }} />*/}
+      <Pressable onPress={() => setVisible(true)} style={{ height: HEIGHT * 0.06, width: HEIGHT * 0.06, position: "absolute", borderRadius: HEIGHT * 0.03, bottom: HEIGHT * 0.03, right: HEIGHT * 0.03, shadowColor: '#26000000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: HEIGHT * 0.03, elevation: 4, backgroundColor: "#3951B6", justifyContent: "center", alignItems: "center" }}>
+        <Icon type="material-community" name="message-text-outline" color='#FFF' size={26} />
+      </Pressable>
+      <Modal visible={visible} style={{ flex: 1, }} animationType="fade" transparent>
+        <TouchableWithoutFeedback style={{ flex: 1 }} onPress={() => setVisible(false)}>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000090", }}>
+            <Pressable style={{ width: WIDTH * 0.9, backgroundColor: "#FFFFFF", paddingHorizontal: WIDTH * 0.03, borderRadius: HEIGHT * 0.01, overflow: "hidden" }}>
+              <View style={{ height: HEIGHT * 0.06, backgroundColor: "#3951B6", marginHorizontal: -WIDTH * 0.03, justifyContent: "space-between", paddingHorizontal: WIDTH * 0.05, flexDirection: "row", alignItems: "center", }}>
+                <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Contacts</Text>
+                <Pressable style={{ margin: 10 }} onPress={() => setVisible(false)}><Icon type="material" name="close" color='#FFF' />
+
+                </Pressable>
+              </View>
+              <SectionList
+                showsVerticalScrollIndicator={false}
+                sections={sectionData}
+                keyExtractor={(item, index) => index.toString()}
+                style={{ marginTop: 12, maxHeight: HEIGHT * 0.8 }}
+                renderSectionHeader={({ section: { title } }) => <View style={{ height: HEIGHT * 0.06, backgroundColor: "#3951B6", marginHorizontal: -WIDTH * 0.03, justifyContent: "space-between", paddingHorizontal: WIDTH * 0.05, flexDirection: "row", alignItems: "center", }}>
+                  <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>{title}</Text>
+                </View>}
+                renderItem={({ item, index }) => {
+                  return (<Pressable onPress={() => {
+                    createChat({
+                      id: item.id,
+                      email: item.email,
+                      name: item.name,
+                      photo: item.photo,
+                      mobile_no: item.mobile_no
+                    })
+                  }} style={{ height: HEIGHT * 0.11, marginBottom: 10, padding: 15, flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 0.5, borderColor: "#3951B6" }}>
+                    <View style={{ width: HEIGHT * 0.07 }}>
+                      <Image defaultSource={require("../../assets/profile-image-placeholder.png")} source={item.photo ? { uri: `${BASE_URL}profilepics/${item.photo}` } : require("../../assets/profile-image-placeholder.png")} style={{ flex: 1, width: HEIGHT * 0.06, }} resizeMode={item.photo ? "cover" : "contain"} />
+                    </View>
+                    <View style={{ flex: 1, justifyContent: "space-between" }}>
+                      <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>{item.name}</Text>
+                      <Text style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.mobile_no}</Text>
+                      <Text numberOfLines={1} style={{ color: '#00000040', fontSize: 14, fontWeight: '400', fontFamily: 'System' }}>{item.email}</Text>
+                    </View>
+                  </Pressable>)
+                }}
+              />
+
+              {/*  <Button
+              containerStyle={{
+                //marginTop: 35,
+                //width: '100%'
+                marginHorizontal: -WIDTH * 0.03,
+              }}
+              buttonStyle={{
+                height: 57,
+                color: '#FFF',
+                fontSize: 17,
+                fontFamily: 'System',
+                borderRadius: 0
+              }}
+              //loading={auth.loggingIn}
+              linearGradientProps={{
+                colors: ['#0066D1', '#03C0C7'],
+                start: { x: 0, y: 0.5 },
+                end: { x: 1, y: 0.5 }
+              }}
+              title="Update"
+              ViewComponent={LinearGradient}
+              onPress={() => [editLesson(), setVisible(false)]} /> */}
+            </Pressable>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </Fragment>
   );
 }
@@ -156,7 +262,6 @@ const styles = StyleSheet.create({
     fontFamily: 'System'
   },
   container: {
-    padding: 24,
     paddingTop: 10,
     backgroundColor: '#FFF'
   },
@@ -165,37 +270,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#E2E8ED"
   },
   ncontainer: {
-    paddingTop: 16,
-    paddingBottom: 16,
     alignItems: 'center',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    paddingHorizontal: WIDTH * 0.05,
+    marginVertical: HEIGHT * 0.01,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25
+    width: HEIGHT * 0.07,
+    height: HEIGHT * 0.07,
+    borderRadius: HEIGHT * 0.035
   },
   content: {
-    marginLeft: 16,
-    marginRight: 0,
     flex: 1,
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingLeft: WIDTH * 0.05,
+    justifyContent: "center",
   },
   message: {
-    marginBottom: 5,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    color: '#8F9BB3',
-    fontSize: 15
+
+    fontSize: 15, paddingLeft: WIDTH * 0.05, height: "100%",
+    // borderBottomWidth: 1
   },
   name: {
     width: '100%',
     color: '#222B45',
     fontSize: 15,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   timeAgo: {
     color: "#C5CEE0",
-    fontSize: 13
+    fontSize: 13,
   }
 });

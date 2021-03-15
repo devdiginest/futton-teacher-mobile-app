@@ -5,11 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '@kimche/react-native-progress-bar';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from '../components/Axios';
-import { CourseComponent } from "./../components"
-
+import { CourseComponent, EmptyList } from "./../components"
+import _ from "lodash"
 export default function MyCoursesOngoing({ navigation }) {
   const [loading, setLoading] = useState(true);
-  const [oCourses, setOCourses] = useState({});
+  const [oCourses, setOCourses] = useState([]);
 
   const auth = useSelector(state => state.auth);
   const userToken = auth.token ? auth.token : null;
@@ -23,7 +23,7 @@ export default function MyCoursesOngoing({ navigation }) {
           const data = response.data;
           console.log(data);
           if (data) {
-            setOCourses(data.ongoing);
+            setOCourses(_.unionBy(data.ongoing, "id"));
           }
         }
       })
@@ -35,11 +35,11 @@ export default function MyCoursesOngoing({ navigation }) {
   }, []);
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <FlatList
         data={oCourses}
         style={styles.flatlist}
-        keyExtractor={(item) => { return item.id.toString(); }}
+        keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => {
           /*  return (
              <TouchableOpacity style={styles.ocourse}>
@@ -59,9 +59,10 @@ export default function MyCoursesOngoing({ navigation }) {
              </TouchableOpacity>
            ) */
           return (<CourseComponent item={item} />)
-        }
-        } />
-    </ScrollView>
+        }}
+        ListEmptyComponent={() => <EmptyList />}
+      />
+    </View>
   );
 }
 

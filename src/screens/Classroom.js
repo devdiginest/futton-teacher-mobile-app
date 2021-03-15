@@ -1,24 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StatusBar, Image, StyleSheet, Pressable, ScrollView, FlatList, Modal, TextInput, ImageBackground } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { Avatar, Button, Header, Text, Icon } from 'react-native-elements';
+import { View, TouchableWithoutFeedback, Image, StyleSheet, Pressable, ScrollView, FlatList, Modal, TextInput, ImageBackground } from 'react-native';
+import { useSelector, connect } from 'react-redux';
+import { Button, Header, Text, Icon } from 'react-native-elements';
 import _ from "lodash"
 import RNPickerSelect from 'react-native-picker-select';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from '../components/Axios';
 import API from "../config/api"
 import { HEIGHT, WIDTH } from "../constants"
-import { TouchableWithoutFeedback } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { BASE_URL } from "./../config/Constants"
+import { EmptyList, Loader } from "../components"
 
-const buttons = ["Robotics", "Forensic Science"]
-const lessons = ['C & C++', 'Maths', 'Physics']
 const subjects = [{ label: 'Robotics', value: 'Robotics' }, { label: 'Forensic Science', value: 'Forensic Science' }, { label: 'Physics', value: 'Physics' }]
 
 const RenderLesson = (props) => {
-  const { item } = props
+  const { item, pickerSubjects, navigation } = props
+  const auth = useSelector(state => state.auth);
+  const userToken = auth.token ? auth.token : null;
+  const Axios = axios(userToken);
   const [visible, setVisible] = useState(false)
-  const [data, setData] = useState({})
+  const [data, setData] = useState(item)
+  const [fileType, setFileType] = useState("")
+  useEffect(() => {
+    if (item.file) {
+      setFileType(item.file.split(".")[1])
+    }
+  }, [])
 
   const setValues = (type, value) => {
     const temp = data == null ? {} : data
@@ -26,7 +34,33 @@ const RenderLesson = (props) => {
     setData({ ...temp })
   }
 
+  const editLesson = async () => {
+    delete data["file"]
+    await Axios.post(API.updateLessons, data)
+      .then(response => {
+        if (response.status && response.status) {
+          const data = response.data;
+          if (data) {
+            props.getMyCourses()
+          }
+        }
+      }).catch(err => console.log(err));
+  };
+
+  const navigateToPlayer = (name = "") => {
+    const file = `${BASE_URL}/lessonsfiles/${item.file}`
+    navigation.navigate(fileType == "pdf" ? "PDFViewer" : "VideoDisplay", { file, name })
+  }
+
   return (<>
+    {/*     <Modal visible={showFile} style={{ flex: 1, backgroundColor: "#FFF" }} animationType="fade" transparent>
+      {fileType == 'pdf' ? <Pdf
+        source={{ uri: `${BASE_URL}/lessonsfiles/${item.file}`, cache: true }}
+        style={{ flex: 1 }} /> : <VideoPlayer uri={`${BASE_URL}/lessonsfiles/${item.file}`} />}
+      <Pressable style={{ margin: 10, position: "absolute", right: 0 }} onPress={() => [Orientation.lockToPortrait(), setShowFile(false)]}>
+        <Icon type="material-community" name="close-circle" color='#3951B6' size={30} />
+      </Pressable>
+    </Modal> */}
     <Modal visible={visible} style={{ flex: 1, }} animationType="fade" transparent>
       <TouchableWithoutFeedback style={{ flex: 1 }} onPress={() => setVisible(false)}>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000090" }}>
@@ -35,13 +69,12 @@ const RenderLesson = (props) => {
               <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Edit lesson</Text>
               <Pressable style={{ margin: 10 }} onPress={() => setVisible(false)}><Icon type="material" name="close" color='#FFF' /></Pressable>
             </View>
-
             <View style={{ borderRadius: WIDTH * 0.02, padding: WIDTH * 0.03, }}>
               <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Subject</Text>
               <RNPickerSelect
                 placeholder={{ label: "Select subject" }}
                 onValueChange={(value) => setValues("subject", value)}
-                items={subjects}
+                items={pickerSubjects}
                 value={_.has(data, "subject") ? data.subject : ""}
                 style={{
                   inputIOS: {
@@ -73,8 +106,8 @@ const RenderLesson = (props) => {
                 <TextInput
                   keyboardType="default"
                   placeholder="Enter the Lesson name"
-                  onChangeText={text => { setValues("lesson_name", text) }}
-                  value={_.has(data, "lesson_name") ? data.lesson_name.toString() : ""}
+                  onChangeText={text => { setValues("name", text) }}
+                  value={_.has(data, "name") ? data.name.toString() : ""}
                 />
               </View>
             </View>
@@ -100,7 +133,7 @@ const RenderLesson = (props) => {
                   //keyboardType="default"
                   //placeholder="Enter the description"
                   //onChangeText={text => { setValues("file", text) }}
-                  value={_.has(data, "file") ? data.file.toString() : "FILE"}
+                  value={_.has(data, "file") && data.file ? data.file.toString() : "FILE"}
                 />
               </View>
               <View style={{ justifyContent: "center" }}>
@@ -109,8 +142,6 @@ const RenderLesson = (props) => {
             </View>
             <Button
               containerStyle={{
-                //marginTop: 35,
-                //width: '100%'
                 marginHorizontal: -WIDTH * 0.03,
               }}
               buttonStyle={{
@@ -128,32 +159,39 @@ const RenderLesson = (props) => {
               }}
               title="Update"
               ViewComponent={LinearGradient}
-              onPress={() => setVisible(false)} />
+              onPress={() => [editLesson(), setVisible(false)]} />
           </Pressable>
         </View>
       </TouchableWithoutFeedback>
     </Modal>
     <View style={{ borderBottomWidth: 0.5, marginTop: HEIGHT * 0.01, height: HEIGHT * 0.07, flexDirection: "row" }}>
       <View style={{ flex: 1, justifyContent: "center", borderColor: "#3951B6" }}>
-        <Text numberOfLines={2} style={{ fontSize: 16, fontFamily: "System", color: "#3951B6", fontWeight: "bold" }}>{item}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 16, fontFamily: "System", color: "#3951B6", fontWeight: "bold" }}>{item.name}</Text>
+        <Text numberOfLines={2} style={{ fontSize: 12, fontFamily: "System", color: "#C7C7C7", fontWeight: "400" }}>{item.description}</Text>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Pressable style={{ margin: 10 }} onPress={() => { }}><Icon type="material" name="play-circle-outline" color='#3951B6' /></Pressable>
+        <Pressable style={{ margin: 10 }} onPress={() => navigateToPlayer(item.name)}><Icon type="material" name={fileType == 'pdf' ? "attach-file" : "play-circle-outline"} color='#3951B6' /></Pressable>
         <Pressable style={{ margin: 10 }} onPress={() => setVisible(true)}><Icon type="material" name="edit" color='#3951B6' /></Pressable>
-        <Pressable style={{ margin: 10 }} onPress={() => { }}><Icon type="material" name="delete-outline" color='#3951B6' /></Pressable>
+        {/* <Pressable style={{ margin: 10 }} onPress={() => { }}><Icon type="material" name="delete-outline" color='#3951B6' /></Pressable> */}
       </View>
-    </View></>)
+    </View>
+  </>)
 }
 
 function Classroom(props) {
-  const { navigation, route: { params: { item = {} } } = { item: {} } } = props
-  const [oCourses, setOCourses] = useState({});
+  const { navigation, route: { params: { item = {} } } = { item: {} }, userData } = props
+  const [courseDetails, setCourseDetails] = useState({});
+  const [courseComments, setCourseComments] = useState([]);
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState(0);
   const [data, setData] = useState({})
   const [dateShow, setDateShow] = useState(false)
   const [startTimeShow, setStartTimeShow] = useState(false)
   const [endTimeShow, setEndTimeShow] = useState(false)
+  const [newCommentModal, setNewCommentModal] = useState(false)
+  const [newComment, setNewComment] = useState({ comment: "" })
+  const [pickerSubject, setPickerSubject] = useState([])
+  const [loading, setLoading] = useState(true);
 
   const setValues = (type, value) => {
     const temp = data == null ? {} : data
@@ -167,26 +205,73 @@ function Classroom(props) {
   const Axios = axios(userToken);
 
   const getMyCourses = async () => {
-    await Axios
-      .get(API.courseDetails(item.id))
+    await Axios.get(API.courseDetails(item.id))
       .then(response => {
         if (response.status === 200) {
           const data = response.data;
-          console.log("courseDetails ==>", item);
           if (data) {
-            setOCourses(data.ongoing);
+            setCourseDetails(data);
+            const tmp = []
+            data.subjects.forEach((item) => {
+              tmp.push({ value: item.id, label: item.name })
+            })
+            setPickerSubject(tmp)
           }
         }
-      })
-      .catch(err => console.log(err));
+      }).catch(err => console.log(err));
+    setLoading(false)
   };
+
+  const getCourseComments = async () => {
+    await Axios.get(API.courseComments(item.id))
+      .then(response => {
+        if (response.status === 200) {
+          const data = response.data;
+          if (data) {
+            setCourseComments(data);
+          }
+        }
+      }).catch(err => console.log(err));
+  };
+
+  const addComment = async () => {
+    const body = {
+      "user_id": userData.id,
+      "profile": "Jd3kyosci1sCSyeOo9sX1c9P",
+      "course_id": item.id,
+      "comment": newComment.comment
+    }
+    if (!_.has(newComment, "id")) {
+      await Axios.post(API.couseComment, body)
+        .then(response => {
+          if (response.status && response.status) {
+            getCourseComments()
+          }
+        }).catch(err => console.log(err));
+    } else {
+      body.id = newComment.id.toString()
+      await Axios.put(API.couseComment, body)
+        .then(response => {
+          if (response.status && response.status) {
+            getCourseComments()
+          }
+        }).catch(err => console.log(err));
+    }
+  }
 
   useEffect(() => {
     getMyCourses();
+    getCourseComments()
+
   }, []);
 
   useEffect(() => {
-    ScrollViewRef.current?.scrollTo({ x: selected * WIDTH, animated: true })
+    try {
+      ScrollViewRef.current?.scrollTo({ x: selected * WIDTH, animated: true })
+    } catch (error) {
+      console.log(error);
+    }
+
   }, [selected])
 
   const getTime = (time = new Date()) => {
@@ -198,6 +283,14 @@ function Classroom(props) {
     return `${h} : ${m} ${am_pm}`
   }
 
+  const checkURL = (url) => {
+    return (url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+  }
+
+  if (loading) {
+    return <Loader />;
+  }
+
   return (<>
     <Header
       backgroundColor="#FFF"
@@ -207,14 +300,14 @@ function Classroom(props) {
         style: styles.headercentercomp
       }}
       leftComponent={<Pressable onPress={() => navigation.goBack()}><Icon type="material" name="arrow-back" color='#3951B6' /></Pressable>}
-      rightComponent={<Pressable onPress={() => setVisible(true)}><Icon type="material" name="ondemand-video" color='#3951B6' /></Pressable>}
+      // rightComponent={<Pressable onPress={() => setVisible(true)}><Icon type="material" name="ondemand-video" color='#3951B6' /></Pressable>}
       containerStyle={styles.headercontainer}
       rightContainerStyle={styles.headerrightcontainer}
       placement="left" />
     <View style={{ flex: 1, backgroundColor: "#FFF" }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ height: HEIGHT * 0.3 }}>
-          <ImageBackground style={{ height: HEIGHT * 0.3 }} source={require("../../assets/img-home-slider.png")}>
+          <ImageBackground style={{ height: HEIGHT * 0.3 }} defaultSource={require('../../assets/futton-logo.png')} source={_.has(item, "thumbnail") && !_.isNull(item.thumbnail) && checkURL(item.thumbnail) ? { uri: `${BASE_URL}storage/${item.thumbnail}` } : require('../../assets/futton-logo.png')} resizeMode="stretch">
             <View style={{ flex: 1, backgroundColor: "#FFFFFF50", padding: WIDTH * 0.05, alignItems: "center" }}>
               <View style={{ flex: 1 }}>
                 {/* <Text style={{
@@ -224,9 +317,9 @@ function Classroom(props) {
                   color: '#C7C7C7', fontSize: 16, fontWeight: '400', fontFamily: 'System'
                 }}>{item.subjectname}</Text> */}
               </View>
-              <Text style={{
+              {_.has(item, 'start_date') && _.has(item, 'énd_date') && <Text style={{
                 color: '#FFF', fontSize: 12, fontWeight: 'bold', fontFamily: 'System'
-              }}>{`${item.start_date} to ${item.end_date}`}</Text>
+              }}>{`${item.start_date} to ${item.end_date}`}</Text>}
             </View>
           </ImageBackground>
         </View>
@@ -234,10 +327,10 @@ function Classroom(props) {
           <FlatList
             showsHorizontalScrollIndicator={false}
             horizontal
-            data={buttons}
+            data={courseDetails.subjects}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item, index }) => <Pressable onPress={() => setSelected(index)} style={{ height: HEIGHT * 0.05, paddingHorizontal: WIDTH * 0.05, alignItems: "center", justifyContent: "center", backgroundColor: selected == index ? '#3951B6' : "#FFF" }}>
-              <Text style={{ fontSize: 16, fontFamily: "System", color: selected != index ? '#3951B6' : "#FFF" }}>{item}</Text>
+              <Text style={{ fontSize: 16, fontFamily: "System", color: selected != index ? '#3951B6' : "#FFF" }}>{item.name}</Text>
             </Pressable>}
           />
         </View>
@@ -251,25 +344,68 @@ function Classroom(props) {
             scrollEnabled={false}
             showsHorizontalScrollIndicator={false}
             horizontal
-            data={buttons}
+            data={courseDetails.subjects}
             keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => <View style={{ width: WIDTH, paddingHorizontal: WIDTH * 0.05, }}>
-              <FlatList
-                showsHorizontalScrollIndicator={false}
-                data={lessons}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item, index }) => <RenderLesson item={item} />}
-              />
-            </View>}
+            renderItem={({ item, index }) => {
+              return <View style={{ width: WIDTH, paddingHorizontal: WIDTH * 0.05, }}>
+                <FlatList
+                  showsHorizontalScrollIndicator={false}
+                  data={item.lessons}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({ item, index }) => {
+                    return <RenderLesson navigation={navigation} item={item} pickerSubjects={pickerSubject} getMyCourses={() => getMyCourses()} />
+                  }}
+                />
+              </View>
+            }}
           />
         </ScrollView>
+        <View style={{ paddingHorizontal: 0, }}>
+          <Text style={{ margin: WIDTH * 0.05, color: '#000', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>Comments</Text>
+          <FlatList
+            showsHorizontalScrollIndicator={false}
+            data={courseComments}
+            extraData={courseComments}
+            style={{ backgroundColor: "#00000020", borderTopLeftRadius: HEIGHT * 0.02, borderTopRightRadius: HEIGHT * 0.02, }}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => {
+              const even = index % 2 == 1
+              const color = even ? '#3951B6' : "#FFF"
+              const backgroundColor = even ? "#FFF" : '#3951B6'
+              return <Pressable onPress={() => { }} onLongPress={() => {
+                setNewComment(item)
+                setNewCommentModal(true)
+              }} style={{ padding: WIDTH * 0.05, backgroundColor, margin: WIDTH * 0.05, marginBottom: 0, borderRadius: HEIGHT * 0.02, borderBottomLeftRadius: 0 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", borderBottomWidth: 0.5, paddingBottom: HEIGHT * 0.01, marginBottom: HEIGHT * 0.01, }}>
+                  <View style={{ width: HEIGHT * 0.06, height: HEIGHT * 0.06, borderRadius: HEIGHT * 0.03, overflow: "hidden", }}>
+                    <Image defaultSource={require("../../assets/profile-image-placeholder.png")} source={item.photo ? { uri: `${BASE_URL}profilepics/${item.photo}` } : require("../../assets/profile-image-placeholder.png")} style={{ flex: 1, width: HEIGHT * 0.06, }} resizeMode={item.photo ? "cover" : "contain"} />
+                  </View>
+                  <View>
+                    <Text style={{ marginHorizontal: WIDTH * 0.05, fontSize: 16, fontFamily: "System", color }}>{item.name}</Text>
+                    <Text style={{ marginHorizontal: WIDTH * 0.05, fontSize: 12, fontFamily: "System", color }}>{item.mobile_no}</Text>
+                    <Text style={{ marginHorizontal: WIDTH * 0.05, fontSize: 12, fontFamily: "System", color }}>{item.email}</Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 14, fontFamily: "System", color }}>{item.comment}</Text>
+              </Pressable>
+            }}
+            ListEmptyComponent={() => <EmptyList />}
+            ListFooterComponent={() => {
+              return (<Pressable onPress={() => {
+                setNewComment({})
+                setNewCommentModal(true)
+              }} style={{ height: HEIGHT * 0.06, marginTop: WIDTH * 0.05, backgroundColor: '#3951B6', alignItems: "center", paddingHorizontal: WIDTH * 0.05, flexDirection: "row", justifyContent: "space-between" }}
+              ><Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Add new comment</Text>
+                <Icon type="ionicon" name="ios-send-sharp" color='#FFF' size={26} />
+              </Pressable>)
+            }}
+          />
+        </View>
       </ScrollView>
     </View>
-
     <Modal visible={visible} style={{ flex: 1, }} animationType="fade" transparent>
-      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={() => setVisible(false)}>
+      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={() => { setVisible(false) }}>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000090" }}>
-
           <Pressable style={{ width: WIDTH * 0.9, backgroundColor: "#FFFFFF", paddingHorizontal: WIDTH * 0.03, borderRadius: HEIGHT * 0.01, overflow: "hidden", maxHeight: HEIGHT * 0.86 }}>
             <View style={{ height: HEIGHT * 0.06, backgroundColor: "#3951B6", marginHorizontal: -WIDTH * 0.03, justifyContent: "space-between", paddingHorizontal: WIDTH * 0.05, flexDirection: "row", alignItems: "center", }}>
               <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', textTransform: "uppercase" }}>Schedule live class</Text>
@@ -281,7 +417,7 @@ function Classroom(props) {
                 <RNPickerSelect
                   placeholder={{ label: "Select subject" }}
                   onValueChange={(value) => setValues("subject", value)}
-                  items={subjects}
+                  items={pickerSubject}
                   value={_.has(data, "subject") ? data.subject : ""}
                   style={{
                     inputIOS: {
@@ -399,7 +535,7 @@ function Classroom(props) {
                     date && setValues("startTime", date)
                   }}
                 />}
-              </Pressable>{console.log(new Date().toLocaleTimeString("en-US").split(/:| /))}
+              </Pressable>
               <Pressable onPress={() => setEndTimeShow(true)} style={{ borderRadius: WIDTH * 0.02, padding: WIDTH * 0.03, marginBottom: WIDTH * 0.05, height: HEIGHT * 0.11, flexDirection: "row", backgroundColor: "#FFF" }}>
                 <View style={{ justifyContent: "space-between", flex: 1 }}>
                   <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>End time</Text>
@@ -462,11 +598,68 @@ function Classroom(props) {
         </View>
       </TouchableWithoutFeedback>
     </Modal>
+    {/* new msg modal */}
+    <Modal visible={newCommentModal} style={{ flex: 1, }} animationType="fade" transparent>
+      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={() => setNewCommentModal(false)}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000090" }}>
+          <Pressable style={{ width: WIDTH * 0.9, backgroundColor: "#FFFFFF", paddingHorizontal: WIDTH * 0.03, borderRadius: HEIGHT * 0.01, overflow: "hidden", height: HEIGHT * 0.3, justifyContent: "space-between" }}>
+            <View style={{ height: HEIGHT * 0.06, backgroundColor: "#3951B6", marginHorizontal: -WIDTH * 0.03, justifyContent: "space-between", paddingHorizontal: WIDTH * 0.05, flexDirection: "row", alignItems: "center", }}>
+              <Text style={{ color: '#FFF', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>{!_.has(newComment, "id") ? "Add" : "Edit"} new comment</Text>
+              <Pressable style={{ margin: 10 }} onPress={() => setNewCommentModal(false)}><Icon type="material" name="close" color='#FFF' /></Pressable>
+            </View>
+            <View style={{ borderRadius: WIDTH * 0.02, padding: WIDTH * 0.03, flexDirection: "row", }}>
+              <View style={{ justifyContent: "space-between", flex: 1 }}>
+                <Text style={{ color: '#3951B6', fontSize: 16, fontWeight: 'bold', fontFamily: 'System', }}>Comment</Text>
+                <TextInput
+                  style={{ alignContent: "flex-start" }}
+                  keyboardType="default"
+                  placeholder="Enter the comment"
+                  multiline
+                  onChangeText={text => {
+                    setNewComment({ ...newComment, comment: text })
+                  }}
+                  value={_.has(newComment, "comment") ? newComment.comment : ""}
+                />
+              </View>
+            </View>
+            <Button containerStyle={{ marginHorizontal: -WIDTH * 0.03, }}
+              buttonStyle={{
+                height: 57,
+                color: '#FFF',
+                fontSize: 17,
+                fontFamily: 'System',
+                borderRadius: 0
+              }}
+              //loading={auth.loggingIn}
+              linearGradientProps={{
+                colors: ['#0066D1', '#03C0C7'],
+                start: { x: 0, y: 0.5 },
+                end: { x: 1, y: 0.5 }
+              }}
+              title={!_.has(newComment, "id") ? "Add" : "Save"}
+              ViewComponent={LinearGradient}
+              onPress={() => {
+                addComment()
+                setNewCommentModal(false)
+              }} />
+          </Pressable>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   </>
   );
 }
 
-export default Classroom
+const mapStateToProps = (state /*, ownProps*/) => {
+  const { userData } = state.auth
+  return {
+    userData: userData,
+  }
+}
+
+const mapDispatchToProps = {}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Classroom)
 
 const styles = StyleSheet.create({
   headercentercomp: {
