@@ -166,6 +166,7 @@ android {
             }
         }
     }
+    ndkVersion '22.0.7026061'
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
